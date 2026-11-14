@@ -16,6 +16,7 @@ test_end and the other target are never used: they are outcomes of the test.
 """
 from __future__ import annotations
 
+import json
 import sys
 import warnings
 from functools import lru_cache
@@ -40,7 +41,17 @@ ROOT = Path(__file__).resolve().parents[1]
 CLEAN = ROOT / "data" / "clean" / "flex_clean.csv"
 EXCLUSIONS = ROOT / "data" / "clean" / "exclusions.csv"
 REPORT = ROOT / "reports" / "validation.md"
+VALIDATION_JSON = ROOT / "reports" / "validation.json"
 MODEL_DIR = ROOT / "models"
+
+# in_range pressure rule (team ruling 2026-11-14): a query is in range only if
+# its pressure is within 40 mmHg of the tests of the "near 535" or "near 760"
+# band, and never above 900 mmHg (only 9 tests there, all at CO2 0.70).
+IN_RANGE_BANDS = ("near_535", "near_760")
+BAND_MARGIN_MMHG = 40.0
+HIGH_PRESSURE_MMHG = 900.0
+# d_ext_over_d0 is a ratio of diameters; predict() clips it to this interval.
+RATIO_BOUNDS = (0.0, 1.0)
 
 TARGETS = ["burning_rate_k", "d_ext_over_d0"]
 BASE = ["is_heptane", "o2_mole_frac", "pressure_atm", "co2_mole_frac", "he_mole_frac", "d0_mm"]
@@ -191,8 +202,9 @@ def configs():
             yield name, fs_name, feats
 
 
-def validate() -> list[str]:
+def validate() -> tuple[list[str], dict]:
     L: list[str] = []
+    out = {"group_kfold": [], "leave_diluent_out": []}
     for target in TARGETS:
         for drop in (False, True):
             df = load_rows(target, drop)
@@ -210,6 +222,8 @@ def validate() -> list[str]:
                 mean, lo, hi = group_kfold(df, target, name, feats)
                 oof[(name, fs_name)] = (mean, lo, hi)
                 m = metrics(y, mean, lo, hi)
+                out["group_kfold"].append({"target": target, "k_outlier_included": not drop, "model": name,
+                                           "features": fs_name, **m})
                 L.append(f"| {name} | {fs_name} | {m['mae']:.3f} | {m['r2']:.2f} | {m['coverage']:.0%} | {m['width']:.2f} |")
                 print(f"  CV   {name:30s} {fs_name:28s} MAE {m['mae']:.3f} R2 {m['r2']:+.2f} cov {m['coverage']:.0%} width {m['width']:.2f}")
             L += ["", "Validation 2: leave one diluent out. The model is trained on every test that does not "
@@ -221,12 +235,15 @@ def validate() -> list[str]:
                     idx, (mean, lo, hi) = leave_diluent_out(df, target, name, feats, held)
                     m = metrics(y[idx], mean, lo, hi)
                     ref = mean_absolute_error(y[idx], oof[(name, fs_name)][0][idx])
+                    out["leave_diluent_out"].append(
+                        {"target": target, "k_outlier_included": not drop, "held_out": held, "model": name,
+                         "features": fs_name, **m, "mae_group_kfold": ref, "times_worse": m["mae"] / ref})
                     L.append(f"| {held} | {len(idx)} | {name} | {fs_name} | {m['mae']:.3f} | {ref:.3f} | "
                              f"{m['mae'] / ref:.1f}x | {m['r2']:.2f} | {m['coverage']:.0%} |")
                     print(f"  LODO {held:3s} {name:30s} {fs_name:28s} MAE {m['mae']:.3f} vs {ref:.3f} "
                           f"({m['mae'] / ref:.1f}x) R2 {m['r2']:+.2f} cov {m['coverage']:.0%}")
             L.append("")
-    return L
+    return L, out
 
 
 # ---------------------------------------------------------------------------
@@ -246,7 +263,7 @@ def train_final() -> list[str]:
         # Pool for "nearest real tests": every test with complete inputs,
         # whether or not it has this target.
         pool = clean.dropna(subset=NUMERIC_INPUTS).copy()
-        bands = (clean.dropna(subset=["pressure_band"]).groupby("pressure_band")["pressure_atm"]
+        bands = (clean.dropna(subset=["pressure_band"]).groupby("pressure_band")["pressure_mmhg"]
                  .agg(["min", "max", "size"]).to_dict("index"))
         bundle = {
             "target": target, "model_name": name, "feature_set": fs_name, "features": feats,
@@ -254,7 +271,7 @@ def train_final() -> list[str]:
             "n_train": len(df), "trained_with_k_outlier": not FINAL_DROP_K_OUTLIER,
             "ranges": {c: (float(df[c].min()), float(df[c].max())) for c in NUMERIC_INPUTS},
             "fuels": sorted(df["fuel"].unique()),
-            "pressure_bands_atm": bands,
+            "pressure_bands_mmhg": bands,
             "pool": pool[["test_number", "flex_identifier", "fuel", *NUMERIC_INPUTS, "diluent",
                           "burning_rate_k", "d_ext_over_d0", "test_end", "quality_flag"]].reset_index(drop=True),
             "pool_scale": {c: float(pool[c].std(ddof=1)) for c in NUMERIC_INPUTS},
@@ -284,7 +301,7 @@ def _bundle(target: str) -> dict:
 
 
 def predict(fuel: str, o2: float, pressure_atm: float, co2: float, he: float, d0_mm: float,
-            target: str = "burning_rate_k") -> dict:
+            target: str = "burning_rate_k", n_nearest: int = 5) -> dict:
     """Predict `target` for one atmosphere and droplet.
 
     fuel            "Methanol" or "Heptane"
@@ -294,11 +311,14 @@ def predict(fuel: str, o2: float, pressure_atm: float, co2: float, he: float, d0
     target          "burning_rate_k" (default) or "d_ext_over_d0"
 
     Returns a dict with
-      mean, lower, upper   prediction and its 90% interval
-      in_range             False if any numeric input is outside the range of
-                           the training tests, the fuel is unknown, or co2 and
-                           he are both > 0
-      warnings             plain-language reasons, also for sparse regions
+      mean, lower, upper   prediction and its 90% interval; for d_ext_over_d0
+                           all three are clipped to [0, 1]
+      in_range             False if o2, co2, he or d0_mm is outside the range of
+                           the training tests, the fuel is unknown, co2 and he
+                           are both > 0, the pressure is above 900 mmHg, or the
+                           pressure is not within 40 mmHg of the tests near
+                           535 or near 760 mmHg
+      warnings             plain-language reasons for in_range = False
       nearest_tests        the 5 closest real tests of the same fuel, each
                            with test_number, flex_identifier, its inputs and
                            its measured values (None where NASA has no value).
@@ -322,6 +342,8 @@ def predict(fuel: str, o2: float, pressure_atm: float, co2: float, he: float, d0
         in_range = False
         warn.append(f"fuel {fuel!r} is not in the data ({', '.join(b['fuels'])})")
     for c in NUMERIC_INPUTS:
+        if c == "pressure_atm":
+            continue  # pressure is judged by the band rule below, not by min and max
         lo, hi = b["ranges"][c]
         if not lo <= q[c] <= hi:
             in_range = False
@@ -329,21 +351,30 @@ def predict(fuel: str, o2: float, pressure_atm: float, co2: float, he: float, d0
     if co2 > 0 and he > 0:
         in_range = False
         warn.append("CO2 and He are both > 0; no FLEX test mixes them")
-    bands = b["pressure_bands_atm"]
-    if not any(v["min"] <= pressure_atm <= v["max"] for v in bands.values()):
-        warn.append("no FLEX test was run at this pressure; tests sit at "
-                    + ", ".join(f"{v['min']:.2f}-{v['max']:.2f} atm ({v['size']} tests)" for v in bands.values()))
-    elif "above_900" in bands and pressure_atm >= bands["above_900"]["min"]:
-        warn.append(f"only {bands['above_900']['size']} tests exist above 900 mmHg, all with CO2 0.70")
+    bands = b["pressure_bands_mmhg"]
+    p_mmhg = pressure_atm * MMHG_PER_ATM
+    if p_mmhg > HIGH_PRESSURE_MMHG:
+        in_range = False
+        n_high = bands.get("above_900", {}).get("size", 0)
+        warn.append(f"pressure {p_mmhg:.0f} mmHg is above {HIGH_PRESSURE_MMHG:.0f} mmHg, where only "
+                    f"{n_high} tests exist, all with CO2 0.70")
+    elif not any(bands[k]["min"] - BAND_MARGIN_MMHG <= p_mmhg <= bands[k]["max"] + BAND_MARGIN_MMHG
+                 for k in IN_RANGE_BANDS):
+        in_range = False
+        warn.append(f"pressure {p_mmhg:.0f} mmHg is not within {BAND_MARGIN_MMHG:.0f} mmHg of a tested band ("
+                    + " or ".join(f"{bands[k]['min']:.0f}-{bands[k]['max']:.0f} mmHg, {bands[k]['size']} tests"
+                                  for k in IN_RANGE_BANDS) + ")")
 
     X = np.array([[q[c] for c in b["features"]]])
     mean, lo, hi = predict_with_interval(b["model"], b["interval"], X)
+    if target == "d_ext_over_d0":  # a ratio of diameters cannot leave [0, 1]
+        mean, lo, hi = (np.clip(v, *RATIO_BOUNDS) for v in (mean, lo, hi))
 
     pool = b["pool"]
     pool = pool[pool["fuel"] == fuel] if fuel in b["fuels"] else pool
     dist = np.sqrt(sum(((pool[c] - q[c]) / b["pool_scale"][c]) ** 2 for c in NUMERIC_INPUTS))
     nearest = []
-    for i in dist.nsmallest(5).index:
+    for i in dist.nsmallest(n_nearest).index:
         r = pool.loc[i]
         rec = {"test_number": int(r["test_number"]), "flex_identifier": r["flex_identifier"],
                "distance": round(float(dist[i]), 3), "fuel": r["fuel"], "test_end": r["test_end"],
@@ -377,7 +408,15 @@ def main() -> int:
          "- Coverage is the share of held-out tests whose measured value falls inside the interval. "
          "The aim is 90%.", "",
          "## Validation tables", ""]
-    L += validate()
+    tables, results = validate()
+    L += tables
+    # Same numbers as the tables above, for the app's "How far to trust this" panel.
+    results = {"generated_by": "src/model.py", "sklearn_version": sklearn.__version__,
+               "n_folds": N_FOLDS, "interval_level": 0.90,
+               "chosen": {t: {"model": CHOSEN[t][0], "features": CHOSEN[t][1],
+                              "trained_with_k_outlier": not FINAL_DROP_K_OUTLIER} for t in TARGETS},
+               **results}
+    VALIDATION_JSON.write_text(json.dumps(results, indent=1), encoding="utf-8")
     L += ["## Honesty test in plain words (chosen models)", "", HONESTY, "",
           "## Is d_ext_over_d0 too noisy to model?", "", RATIO_VERDICT, "", "## Chosen models", ""]
     L += train_final()
@@ -385,7 +424,11 @@ def main() -> int:
           "- Among diluted tests O2 and diluent fraction move together (see `reports/eda.md`, section A), "
           "so the models cannot attribute an effect to one or the other inside a pressure band.",
           "- Above 900 mmHg there are 9 tests, all at CO2 0.70; between the three pressure groups there are none.",
-          "- CO2 and He are never mixed. `predict` returns `in_range = False` for such a query.",
+          "- CO2 and He are never mixed. `predict` returns `in_range = False` for such a query, for any "
+          "pressure above 900 mmHg, and for any pressure more than 40 mmHg away from the tests near 535 or "
+          "near 760 mmHg.",
+          "- `predict` clips the d_ext_over_d0 mean and interval to [0, 1]. The validation tables above "
+          "use the unclipped model output.",
           "- These are single fuel droplets. Nothing here predicts a cabin fire.", ""]
     REPORT.write_text("\n".join(L), encoding="utf-8")
     print(f"\nwrote {REPORT}")

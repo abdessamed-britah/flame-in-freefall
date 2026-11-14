@@ -1,0 +1,5 @@
+psi_id,file,column,quantity,status,reason,would_give_min,would_give_max
+PSI-23,PSI-23_Experimental table_ACME s-Flame.csv,Atmosphere*,o2,not used,header does not state the unit,,
+PSI-39,PSI-39_Experimental table_CFI.csv,Pressure,pressure,not used,header does not state the unit,,
+PSI-39,PSI-39_Experimental table_CFI.csv,Oxygen,o2,not used,header does not state the unit,,
+PSI-100,PSI-100_Experimental table_SAFFIRE-3.csv,Air Flow,flow,not used,header does not state the unit,,

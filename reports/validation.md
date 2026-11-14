@@ -203,5 +203,6 @@ Training range used for `in_range`:
 
 - Among diluted tests O2 and diluent fraction move together (see `reports/eda.md`, section A), so the models cannot attribute an effect to one or the other inside a pressure band.
 - Above 900 mmHg there are 9 tests, all at CO2 0.70; between the three pressure groups there are none.
-- CO2 and He are never mixed. `predict` returns `in_range = False` for such a query.
+- CO2 and He are never mixed. `predict` returns `in_range = False` for such a query, for any pressure above 900 mmHg, and for any pressure more than 40 mmHg away from the tests near 535 or near 760 mmHg.
+- `predict` clips the d_ext_over_d0 mean and interval to [0, 1]. The validation tables above use the unclipped model output.
 - These are single fuel droplets. Nothing here predicts a cabin fire.

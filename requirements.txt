@@ -1,0 +1,11 @@
+# Runtime, pinned to the versions the saved models in models/ were trained with.
+# Python 3.11. A different scikit-learn or numpy may fail to load the .joblib files.
+streamlit==1.67.0
+pandas==3.1.1
+numpy==2.4.6
+scipy==1.17.1
+scikit-learn==1.9.1
+joblib==1.6.0
+plotly==7.1.0
+# AI layer (optional at run time: without ANTHROPIC_API_KEY the app shows template summaries)
+anthropic==2.8.0

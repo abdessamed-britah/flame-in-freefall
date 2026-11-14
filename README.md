@@ -17,6 +17,9 @@ combustion investigations.
 
 ## What the dashboard does
 
+Four pages: **Home** (purpose, data sources, limits), **Catalog**,
+**Suppression Lab** and **Unified Data**.
+
 **Investigation Catalog.** The 24 investigations that NASA's Physical Sciences
 Informatics (PSI) system lists under Combustion Science, built from NASA's own
 records. Filter them (fire-safety pillar, fuel phase, hardware, O2 range),
@@ -91,6 +94,41 @@ Column meanings and units of the FLEX table are documented in
 [NASA/TP-2015-216046](https://ntrs.nasa.gov/citations/20150023456) (Table IX
 and Appendix A.1); the team has not yet confirmed them against that report.
 
+## Unified schema and units map
+
+`src/normalize.py` reads the 22 experimental tables in `data/raw/psi/tables/`
+and writes `data/unified/tests_conditions.csv`, one row per source-table row
+(2,009 rows), with the same columns and units for every investigation:
+
+| Column | Meaning | Unit |
+|---|---|---|
+| `psi_id`, `investigation` | PSI id and name | |
+| `test_id` | test identifier as printed in the source table | |
+| `source_file`, `source_row` | the NASA table and row the values come from (always unique) | |
+| `fuel` | as printed in the source table | |
+| `fuel_phase` | solid, liquid or gas (team label, from `curated_labels.csv`) | |
+| `gravity` | blank in every row: no table states it per row | |
+| `o2_mole_frac` | O2 | mole fraction |
+| `o2_basis` | "ambient" or "oxidizer stream" (gas fed through the burner) | |
+| `pressure_kpa` | pressure | kPa |
+| `flow_speed_cm_s` | air or inlet flow speed | cm/s |
+| `diluent`, `diluent_mole_frac` | added CO2 or He (FLEX only) | mole fraction |
+| `sample_size_mm` | droplet diameter, burner size or nozzle diameter; the units map says which | mm |
+| `quality_flag` | approximate values, cells with several values, rows that are not one test | |
+
+`data/unified/units_map.csv` has one row per source column (81 rows): original
+header, original unit, conversion, factor, target column and status.
+
+| Status | Columns | Meaning |
+|---|---|---|
+| converted | 10 | atm x 101.325, bar x 100, mmHg x 101.325/760 to kPa; percent x 0.01 to mole fraction |
+| copied | 61 | already in the target unit, or text (test id, fuel) |
+| unit not stated | 8 | header gives no unit; not used, cell left blank |
+| not mapped | 2 | unit stated but no matching target column |
+
+A value is converted only when the column header or the PSI record states the
+unit. Units written inside the cells are not read.
+
 ## Validation
 
 Two Gaussian-process models, one per target, trained on the FLEX table. Inputs:
@@ -151,6 +189,11 @@ to its source cell, and the FLEX rows are compared with `flex_clean.csv`).
   source column gives no unit, holds several values in one cell, or does not
   exist. No table says per row whether a test ran in microgravity or normal
   gravity, so that column is blank throughout.
+- **Known gap: CFI and SAFFIRE-III.** CFI (PSI-39, 87 rows) prints its pressure
+  as "1 atm" and its O2, N2 and He as bare numbers under headers with no unit;
+  SAFFIRE-III (PSI-100) prints "30 cm/s" and ".33 cm" the same way. Units
+  written in the cells are not read, so these conditions are blank in the
+  unified table and the catalog. The values are in NASA's original tables.
 - **Catalog gaps are shown, not filled.** A cell with no source is blank and
   scores zero. O2 (mole fraction), pressure (kPa) and flow ranges are computed only from table columns
   whose header states the quantity and unit. For ACME Flame Design and CFI-G the
@@ -171,7 +214,12 @@ A rejected answer, a failed call, or a missing key all lead to the same place:
 a plain template summary built from the data, labelled as not AI-generated. The
 relevance ranking and the predictions never use AI.
 
-AI assistance was also used to write the code (Claude Code).
+### AI tools used to build the project
+
+Claude Code (Anthropic) was used to write the code, the tests and this README
+under the team's direction. The team set the rules (never fill a missing value,
+never guess a unit), made the rulings on ambiguous columns, and reviewed each
+step. No AI generated or altered any NASA data value.
 
 ## Run it locally
 

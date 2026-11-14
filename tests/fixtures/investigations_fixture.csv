@@ -1,0 +1,4 @@
+psi_id,name,doi,objective,fuel,fuel_phase,sample_geometry,hardware,o2_min_pct,o2_max_pct,pressure_min_psi,pressure_max_psi,airflow,measurements,fire_safety_pillar,data_table_available,source_url
+FIXTURE-A,Placeholder investigation A (not a real NASA record),,Placeholder objective A for testing the page,placeholder solid,solid,placeholder sheet,PLACEHOLDER-RIG-1,18,34,8.0,14.7,placeholder flow,placeholder flame spread rate,prevention,yes,https://example.org/fixture-a
+FIXTURE-B,Placeholder investigation B (not a real NASA record),,Placeholder objective B for testing the page,placeholder liquid,liquid,placeholder droplet,PLACEHOLDER-RIG-2,12,25,14.7,14.7,,placeholder burning rate,suppression,yes,https://example.org/fixture-b
+FIXTURE-C,Placeholder investigation C (not a real NASA record),,Placeholder objective C for testing the page,placeholder gas,gas,,PLACEHOLDER-RIG-1,,,,,placeholder flow,,detection,,https://example.org/fixture-c

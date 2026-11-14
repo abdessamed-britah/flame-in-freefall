@@ -9,6 +9,7 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
+import ai  # noqa: E402
 import lab  # noqa: E402
 from model import predict  # noqa: E402
 
@@ -98,8 +99,13 @@ st.plotly_chart(lab.ratio_figure(s, ratio_curve, suppressant, d0_mm, threshold, 
 n_ratio = int(s["d_ext_over_d0"].notna().sum())
 st.caption(f"Points are the {n_ratio} NASA tests of this slice that have an extinction ratio "
            f"({len(s) - n_ratio} more tests have none and are not drawn); they cover droplets of {d_lo:.2f} to "
-           f"{d_hi:.2f} mm, while the line is for {d0_mm:.2f} mm. Hover a point for its test number.")
-st.info(lab.crossing_sentence(ratio_curve, threshold, fuel, suppressant, d0_mm))
+           f"{d_hi:.2f} mm, while the line is for {d0_mm:.2f} mm. Hover a point for its test number. "
+           "The ratio cannot exceed 1 (the flame cannot go out at a diameter larger than the droplet started "
+           "with), so the model line and band are cut off at 1.")
+sentence = lab.crossing_sentence(ratio_curve, threshold, fuel, suppressant, d0_mm)
+st.info(sentence)
+st.caption("\"At least\" is where the top of the 90% band reaches the threshold; the best estimate is where "
+           "the model line does. Percentages are mole fractions of suppressant.")
 
 # ---------------------------------------------------------------- 3
 st.subheader("2. Burning rate: CO2 against He")
@@ -113,7 +119,8 @@ st.caption("Each model line stops where NASA's tests for that suppressant stop. 
 
 # ---------------------------------------------------------------- 4
 st.subheader("3. Evidence: the 5 nearest NASA tests")
-st.dataframe(lab.evidence_table(df, q), hide_index=True, width="stretch")
+evidence = lab.evidence_table(df, q)
+st.dataframe(evidence, hide_index=True, width="stretch")
 st.caption("Same fuel only. Distance is over O2, pressure, CO2, He and d0, each divided by its standard "
            "deviation across the tests; smaller is closer. Empty cells are values NASA did not report.")
 
@@ -130,8 +137,24 @@ st.dataframe(lodo, hide_index=True, width="stretch")
 st.caption("Source: reports/validation.json, written by src/model.py. If \"MAE\" is close to \"MAE of mean "
            "baseline\", the model is no better than guessing the average for that suppressant.")
 
+# ---------------------------------------------------------------- explain
+st.subheader("5. Explain this result")
+if st.button("Explain this result"):
+    facts, template = lab.explain_inputs(preset, fuel, suppressant, fraction, d0_mm, gas, pressure_mmhg,
+                                         threshold, ratio_now, rate_now, sentence, evidence, cv)
+    with st.spinner("Writing the explanation..."):
+        out = ai.explain_result(facts, template)
+    st.caption(out["label"])
+    st.write(out["text"])
+    if out["note"]:
+        st.caption(out["note"])
+else:
+    st.caption("Writes a short interpretation of the numbers on this page. "
+               + ("Uses AI; the text may only use numbers already shown here." if ai.has_key()
+                  else f"No AI key is set ({ai.KEY_ENV}), so a template summary is shown instead."))
+
 # ---------------------------------------------------------------- 7
-st.subheader("5. Physics comparison")
+st.subheader("6. Physics comparison")
 if lab.PHYSICS_NOTE.exists():
     st.markdown(lab.PHYSICS_NOTE.read_text(encoding="utf-8"))
 else:

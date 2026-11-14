@@ -40,10 +40,7 @@ with a:
     st.markdown("**Investigation Catalog**")
     st.markdown("Filter, compare and rank NASA PSI combustion investigations by relevance to a chosen habitat, "
                 "with a transparent score.")
-    if (ROOT / "app" / "pages" / "1_Catalog.py").exists():
-        st.markdown("Open **Catalog** in the sidebar.")
-    else:
-        st.caption("Not in this build yet.")
+    st.markdown("Open **Catalog** in the sidebar.")
 with b:
     st.markdown("**Moon Base Suppression Lab**")
     st.markdown("Pick a base atmosphere, a fuel and a suppressant (CO2 or He), and see how close the flame "
@@ -60,7 +57,8 @@ st.markdown(
     f"{bands.get('above_900', 0)} above 900 mmHg; "
     f"{diluents.get('CO2', 0)} with CO2, {diluents.get('He', 0)} with He, {diluents.get('none', 0)} with "
     "neither.\n"
-    "- Column meanings and units are documented in NASA/TP-2015-216046 (Table IX and Appendix A.1); "
+    f"- Column meanings and units are documented in [NASA/TP-2015-216046]({lab.FLEX_REPORT_URL}) "
+    "(Table IX and Appendix A.1); "
     "the team has not yet confirmed them against that report.")
 
 st.subheader("Limits")

@@ -21,6 +21,7 @@ VALIDATION_JSON = ROOT / "reports" / "validation.json"
 PHYSICS_NOTE = ROOT / "docs" / "physics_note.md"
 
 PSI69_DOI_URL = "https://doi.org/10.60555/mbq8-0451"  # resolves to NASA's PSI-69 record
+FLEX_REPORT_URL = "https://ntrs.nasa.gov/citations/20150023456"  # NASA/TP-2015-216046
 
 # Base atmospheres. o2_base is the oxygen share of the O2/N2 mix before any
 # suppressant is added; `band` is the group of NASA tests it is compared with.
@@ -127,22 +128,60 @@ def crossing(c: pd.DataFrame, threshold: float) -> dict:
 
 
 def crossing_sentence(c: pd.DataFrame, threshold: float, fuel: str, suppressant: str, d0_mm: float) -> str:
+    """Plain-words answer to "how much suppressant to get near the limit?".
+    "At least" is where the top of the 90% band reaches the threshold, the best
+    estimate is where the model mean does, and the upper bound is where the
+    bottom of the band does."""
     x = crossing(c, threshold)
-    lo, hi = c["fraction"].min(), c["fraction"].max()
-    who = f"For a {d0_mm:.2f} mm {fuel.lower()} droplet"
-    tested = f"the tested range ({suppressant} {lo:.2f} to {hi:.2f})"
-    nr = "not reached within the tested range"
+    pct = lambda v: f"{int(np.ceil(v * 100 - 1e-9))}%"  # whole percent, rounded up ("at least")  # noqa: E731
+    who = f"For a {d0_mm:.2f} mm {fuel.lower()} droplet: "
+    stop = f"NASA's tests stop at {pct(c['fraction'].max())}"
     if x["upper"] is None:
-        return (f"{who}, the near-limit threshold of {threshold:.2f} is {nr}: across {tested} even the top "
-                f"of the 90% band stays below it (highest value {c['upper'].max():.2f}).")
-    end = (f"and {x['lower']:.2f}" if x["lower"] is not None
-           else f"and a point beyond the tested range (the bottom of the 90% band is still at "
-                f"{c['lower'].iloc[-1]:.2f} at {hi:.2f})")
-    mean = (f"The model mean crosses at {x['mean']:.2f}" if x["mean"] is not None
-            else f"The model mean stays below it across the tested range (highest value {c['mean'].max():.2f})")
-    return (f"{who}, the predicted extinction ratio reaches the near-limit threshold of {threshold:.2f} at a "
-            f"{suppressant} fraction between {x['upper']:.2f} {end}. {mean}. "
-            f"The model is drawn across {tested} only.")
+        return (f"{who}not reached within the tested range. {stop} {suppressant}, and up to there the "
+                f"prediction stays below the near-limit threshold of {threshold:.2f}.")
+    best = (f"best estimate {pct(x['mean'])}" if x["mean"] is not None
+            else "the best estimate lies beyond the tested range")
+    if x["lower"] is None:
+        return (f"{who}likely needs at least {pct(x['upper'])} {suppressant} ({best}). "
+                f"{stop}, so the data cannot give an upper bound.")
+    return f"{who}likely needs between {pct(x['upper'])} and {pct(x['lower'])} {suppressant} ({best})."
+
+
+def explain_inputs(preset: str, fuel: str, suppressant: str, fraction: float, d0_mm: float, gas: dict,
+                   pressure_mmhg: float, threshold: float, ratio: dict, rate: dict, sentence: str,
+                   evidence: pd.DataFrame, cv: pd.DataFrame) -> tuple[list[str], str]:
+    """For the "Explain this result" button: the facts the page already shows,
+    and a plain template summary built from them (used when no AI is available)."""
+    tests = ", ".join(f"test {int(t)}" for t in evidence["Test"])
+    seen = evidence["d_ext / d0"].dropna()
+    cv_ratio = cv[cv["Target"] == TARGET_LABEL["d_ext_over_d0"]].iloc[0]
+    facts = [
+        f"Base atmosphere: {preset}; pressure {pressure_mmhg:.0f} mmHg",
+        f"Fuel: {fuel.lower()} droplet, initial diameter {d0_mm:.2f} mm",
+        f"Suppressant: {suppressant} at mole fraction {fraction:.2f}; chamber O2 {gas['o2']:.3f}",
+        f"Predicted extinction ratio d_ext/d0: {ratio['mean']:.2f}, 90% interval {ratio['lower']:.2f} to "
+        f"{ratio['upper']:.2f} (near 1 means the flame went out almost at once; it cannot exceed 1)",
+        f"Predicted burning rate K (unit unconfirmed): {rate['mean']:.2f}, 90% interval {rate['lower']:.2f} to "
+        f"{rate['upper']:.2f}",
+        f"Near-limit threshold chosen by the team (not a NASA value): {threshold:.2f}",
+        f"Threshold finding: {sentence}",
+        f"Inputs inside the range of NASA's tests: {'yes' if ratio['in_range'] and rate['in_range'] else 'no'}",
+        f"Nearest NASA tests: {tests}"
+        + (f"; their measured extinction ratios run from {seen.min():.2f} to {seen.max():.2f}" if len(seen) else ""),
+        f"Typical model error for the extinction ratio on unseen tests (MAE): {cv_ratio['MAE']}; "
+        f"mean baseline {cv_ratio['MAE of mean baseline']}",
+        "Limits: single fuel droplets, not cabin materials; visible flame extinction may not be the end of burning",
+    ]
+    template = (
+        f"With {fraction:.0%} {suppressant} in the {preset.split(' (')[0]} atmosphere, the model predicts an "
+        f"extinction ratio of {ratio['mean']:.2f} (90% interval {ratio['lower']:.2f} to {ratio['upper']:.2f}) "
+        f"for a {d0_mm:.2f} mm {fuel.lower()} droplet, against the team's near-limit threshold of "
+        f"{threshold:.2f}. It {sentence.split(': ', 1)[-1]} The predicted burning rate is {rate['mean']:.2f} "
+        f"(90% interval {rate['lower']:.2f} to {rate['upper']:.2f}; unit unconfirmed). "
+        f"The closest real NASA tests are {tests}. "
+        f"On tests it had not seen, the model's typical error for the extinction ratio was {cv_ratio['MAE']}. "
+        "These are single fuel droplets, not cabin materials.")
+    return facts, template
 
 
 # ---------------------------------------------------------------------------

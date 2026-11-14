@@ -18,22 +18,22 @@ def df():
 
 
 def ranked(df, weights=None, pillar="suppression", habitat=MOON):
-    return cat.rank(df, weights or cat.DEFAULT_WEIGHTS, pillar, habitat["o2_pct"], habitat["pressure_psi"],
+    return cat.rank(df, weights or cat.DEFAULT_WEIGHTS, pillar, habitat["o2_frac"], habitat["pressure_kpa"],
                     habitat["pressure_rule"]).set_index("psi_id")
 
 
 def test_fixture_loads_with_blanks_kept_missing(df):
     assert len(df) == 3 and list(df["psi_id"]) == ["FIXTURE-A", "FIXTURE-B", "FIXTURE-C"]
     c = df.set_index("psi_id").loc["FIXTURE-C"]
-    assert pd.isna(c["o2_max_pct"]) and pd.isna(c["pressure_min_psi"]) and c["measurements"] == ""
-    assert cat.show(c["o2_max_pct"]) == cat.NOT_STATED and cat.show(c["measurements"]) == cat.NOT_STATED
+    assert pd.isna(c["o2_max_frac"]) and pd.isna(c["pressure_min_kpa"]) and c["measurements"] == ""
+    assert cat.show(c["o2_max_frac"]) == cat.NOT_STATED and cat.show(c["measurements"]) == cat.NOT_STATED
 
 
 def test_score_is_the_weighted_sum_of_the_criteria(df):
     r = ranked(df)
-    # FIXTURE-A: pillar prevention (no match 0), solid 1, O2 max 34 >= 30 (1), pressure min 8.0 <= 10.2 (1), data yes (1)
+    # FIXTURE-A: pillar prevention (no match 0), solid 1, O2 max 0.34 >= 0.30 (1), pressure min 55.16 <= 70.3 (1), data yes (1)
     assert r.loc["FIXTURE-A", "score"] == pytest.approx(100 * (0 + 3 + 2 + 2 + 1) / 10)
-    # FIXTURE-B: pillar match 1, liquid 0.5, O2 max 25 < 30 (0), pressure min 14.7 > 10.2 (0), data yes (1)
+    # FIXTURE-B: pillar match 1, liquid 0.5, O2 max 0.25 < 0.30 (0), pressure min 101.3 > 70.3 (0), data yes (1)
     assert r.loc["FIXTURE-B", "score"] == pytest.approx(100 * (2 + 1.5 + 0 + 0 + 1) / 10)
     assert r.loc["FIXTURE-A", "points_phase"] == pytest.approx(30)
 
@@ -60,23 +60,23 @@ def test_all_weights_zero_gives_zero_scores(df):
 
 def test_tied_ranks_are_marked_and_ordered_by_acronym(df):
     df = df.assign(acronym=["ZED", "", "ALPHA"])
-    r = cat.rank(df, dict.fromkeys(cat.CRITERIA, 0), "suppression", 30, 10.2, "at_or_below")
+    r = cat.rank(df, dict.fromkeys(cat.CRITERIA, 0), "suppression", 0.30, 70.3, "at_or_below")
     assert list(r["rank"]) == ["=1", "=1", "=1"]
     assert list(r["acronym"]) == ["ALPHA", "ZED", ""]       # alphabetical, no acronym last
     assert list(ranked(df)["rank"]) == ["1", "2", "3"]      # no ties -> plain ranks
 
 
 def test_oxidizer_stream_o2_is_shown_but_scores_zero(df):
-    df = df.assign(o2_stream_max_pct=[float("nan"), float("nan"), 85.0])
+    df = df.assign(o2_stream_max_frac=[float("nan"), float("nan"), 0.85])
     r = ranked(df)
     assert r.loc["FIXTURE-C", "points_o2"] == 0
-    assert "oxidizer-stream" in r.loc["FIXTURE-C", "cell_o2"] and "85" in r.loc["FIXTURE-C", "cell_o2"]
+    assert "oxidizer-stream" in r.loc["FIXTURE-C", "cell_o2"] and "0.85" in r.loc["FIXTURE-C", "cell_o2"]
 
 
 def test_iss_pressure_rule_needs_the_range_to_contain_the_target(df):
     r = ranked(df, habitat=cat.HABITATS["ISS"])
-    assert r.loc["FIXTURE-A", "points_pressure"] > 0   # 8.0 to 14.7 contains 14.7
-    assert r.loc["FIXTURE-B", "points_pressure"] > 0   # 14.7 to 14.7
+    assert r.loc["FIXTURE-A", "points_pressure"] > 0   # 55.16 to 101.3 contains 101.3
+    assert r.loc["FIXTURE-B", "points_pressure"] > 0   # 101.3 to 101.3
     assert r.loc["FIXTURE-C", "points_pressure"] == 0  # not stated
 
 
@@ -84,8 +84,8 @@ def test_filters(df):
     assert list(cat.filter_catalog(df, pillars=["suppression"])["psi_id"]) == ["FIXTURE-B"]
     assert list(cat.filter_catalog(df, phases=["solid", "gas"])["psi_id"]) == ["FIXTURE-A", "FIXTURE-C"]
     assert list(cat.filter_catalog(df, hardware=["PLACEHOLDER-RIG-1"])["psi_id"]) == ["FIXTURE-A", "FIXTURE-C"]
-    assert list(cat.filter_catalog(df, o2_range=(28, 34))["psi_id"]) == ["FIXTURE-A", "FIXTURE-C"]
-    assert list(cat.filter_catalog(df, o2_range=(28, 34), keep_unstated_o2=False)["psi_id"]) == ["FIXTURE-A"]
+    assert list(cat.filter_catalog(df, o2_range=(0.28, 0.34))["psi_id"]) == ["FIXTURE-A", "FIXTURE-C"]
+    assert list(cat.filter_catalog(df, o2_range=(0.28, 0.34), keep_unstated_o2=False)["psi_id"]) == ["FIXTURE-A"]
 
 
 def test_compare_marks_the_fields_that_differ(df):
@@ -93,7 +93,7 @@ def test_compare_marks_the_fields_that_differ(df):
     marks = dict(zip(table.index, differs))
     assert marks["Hardware"] is False          # same rig
     assert marks["Fuel phase"] is True
-    assert table.loc["O2 max (%)", "FIXTURE-C"] == cat.NOT_STATED
+    assert table.loc["O2 max (mole fraction)", "FIXTURE-C"] == cat.NOT_STATED
 
 
 def test_every_row_has_a_link(df):

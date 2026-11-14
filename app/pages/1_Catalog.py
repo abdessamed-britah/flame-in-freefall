@@ -25,7 +25,7 @@ df, is_fixture = catalog_data()
 
 st.title("Investigation Catalog")
 st.caption("NASA PSI investigations whose research area is Combustion Science, built from NASA's own PSI "
-           "records. O2, pressure and flow ranges are computed from an investigation's experimental table only "
+           "records. O2 (mole fraction), pressure (kPa) and flow ranges are computed from an investigation's experimental table only "
            "when a column header states the quantity and unit; the column used is shown beside them. "
            "Pillar and fuel phase are the team's labels, each with its basis. "
            "A cell with no source is left blank and shown as \"not stated\".")
@@ -41,10 +41,10 @@ with st.sidebar:
     pillars = st.multiselect("Fire-safety pillar", opts("fire_safety_pillar"))
     phases = st.multiselect("Fuel phase", opts("fuel_phase"))
     hardware = st.multiselect("Hardware", opts("hardware"))
-    o2_vals = pd.concat([df["o2_min_pct"], df["o2_max_pct"]]).dropna()
+    o2_vals = pd.concat([df["o2_min_frac"], df["o2_max_frac"]]).dropna()
     o2_range, keep_unstated = None, True
     if len(o2_vals) and o2_vals.min() < o2_vals.max():
-        o2_range = st.slider("O2 range tested (%)", float(o2_vals.min()), float(o2_vals.max()),
+        o2_range = st.slider("O2 range tested (mole fraction)", float(o2_vals.min()), float(o2_vals.max()),
                              (float(o2_vals.min()), float(o2_vals.max())))
         keep_unstated = st.checkbox("Keep investigations whose O2 range is not stated", value=True)
 
@@ -78,8 +78,8 @@ with left:
     habitat = st.selectbox("Habitat", list(cat.HABITATS))
     h = cat.HABITATS[habitat]
     st.caption(h["note"])
-    o2_target = st.number_input("Habitat O2 (%)", 0.0, 100.0, h["o2_pct"], 0.5, key=f"o2_{habitat}")
-    p_target = st.number_input("Habitat pressure (psi)", 0.0, 50.0, h["pressure_psi"], 0.1, key=f"p_{habitat}")
+    o2_target = st.number_input("Habitat O2 (mole fraction)", 0.0, 1.0, h["o2_frac"], 0.01, key=f"o2_{habitat}")
+    p_target = st.number_input("Habitat pressure (kPa)", 0.0, 400.0, h["pressure_kpa"], 0.1, key=f"p_{habitat}")
     pillar_opts = sorted(v for v in df["fire_safety_pillar"].unique() if v)
     pillar = st.selectbox("Fire-safety pillar of interest", pillar_opts,
                           index=pillar_opts.index("suppression") if "suppression" in pillar_opts else 0)
@@ -93,8 +93,8 @@ with right:
     rule = ("its lowest pressure is at or below" if h["pressure_rule"] == "at_or_below"
             else "its pressure range contains")
     st.caption(f"Score = 100 x sum(weight x criterion) / sum(weights). An investigation meets the O2 criterion "
-               f"when its highest O2 is at least {o2_target:g}%, and the pressure criterion when {rule} "
-               f"{p_target:g} psi. A blank cell scores zero. This is a transparent sum, not an AI score.")
+               f"when its highest O2 mole fraction is at least {o2_target:g}, and the pressure criterion when {rule} "
+               f"{p_target:g} kPa. A blank cell scores zero. This is a transparent sum, not an AI score.")
     if len(ranked):
         score = ranked[["rank", "psi_id", "acronym", "name", "score"] + [f"points_{k}" for k in cat.CRITERIA]
                        + ["source_url"]].copy()
@@ -111,7 +111,7 @@ with right:
         st.markdown("**Catalog cells behind each criterion**")
         st.dataframe(ranked[["psi_id"] + [f"cell_{k}" for k in cat.CRITERIA]].rename(
             columns={"psi_id": "PSI id", "cell_pillar": "Pillar", "cell_phase": "Fuel phase",
-                     "cell_o2": "Ambient O2 max (%)", "cell_pressure": "Pressure (psi)",
+                     "cell_o2": "Ambient O2 max (mole fraction)", "cell_pressure": "Pressure (kPa)",
                      "cell_data": "Data table in PSI"}),
             hide_index=True, width="stretch")
     else:

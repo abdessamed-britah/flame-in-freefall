@@ -141,7 +141,7 @@ def catalog_template(question: str, df: pd.DataFrame) -> tuple[str, list[str]]:
     for _, r in hits[:5]:
         lines.append(f"- {r['name']}: pillar {cat.show(r['fire_safety_pillar'])}, fuel phase "
                      f"{cat.show(r['fuel_phase'])}, hardware {cat.show(r['hardware'])}, O2 "
-                     f"{cat.show(r['o2_min_pct'])} to {cat.show(r['o2_max_pct'])} % [{r['psi_id']}]")
+                     f"{cat.show(r['o2_min_frac'])} to {cat.show(r['o2_max_frac'])} (mole fraction) [{r['psi_id']}]")
     return "\n".join(lines), [r["psi_id"] for _, r in hits[:5]]
 
 

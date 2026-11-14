@@ -9,7 +9,7 @@ Three kinds of cell:
    experimental table.
 2. Computed from the investigation's experimental table(s), only from a column
    whose header states the quantity and its unit (rules in RULES below):
-   O2 range, pressure range, flow-speed range. The column used is recorded in
+   O2 range (mole fraction), pressure range (kPa), flow-speed range (cm/s). The column used is recorded in
    the matching *_basis cell. No matching column -> blank.
 3. Curated labels (fire_safety_pillar, fuel_phase), read from
    data/catalog/curated_labels.csv, each with its own basis. That file is
@@ -41,9 +41,12 @@ NOT_USED = OUT_DIR / "columns_not_used.csv"
 PSI_PAGE = "https://psi.nasa.gov/physci/repo/data/investigations/{}"
 
 # unit conversions (stated formulas)
-PSI_PER_ATM = 14.6959
-PSI_PER_BAR = 14.5038
-PSI_PER_MMHG = PSI_PER_ATM / 760.0
+# catalog units: O2 as mole fraction, pressure in kPa (the same as data/unified/)
+KPA_PER_ATM = 101.325
+KPA_PER_BAR = 100.0
+KPA_PER_MMHG = 101.325 / 760.0
+KPA_PER_PSI = 6.894757
+FRAC_PER_PERCENT = 0.01
 
 # ---- rule 2: header patterns that state quantity and unit --------------------
 # (quantity, regex on the lower-cased header, unit as stated, factor to the catalog unit)
@@ -51,20 +54,20 @@ PSI_PER_MMHG = PSI_PER_ATM / 760.0
 # the one the tests were set up with.
 EXCLUDE = re.compile(r"\b(final|after|mean)\b|pfinal|pmean")
 RULES = [
-    ("o2", re.compile(r"(\bo2\b|oxygen).*mole fraction"), "mole fraction", 100.0),
-    ("o2", re.compile(r"(\bo2\b|oxygen).*(%|percent)|(%|percent).*(\bo2\b|oxygen)"), "percent", 1.0),
-    ("pressure", re.compile(r"(pressure|^pinit|^approx p).*\(atm\)"), "atm", PSI_PER_ATM),
-    ("pressure", re.compile(r"(pressure|^pinit|^approx p).*\(bar\)"), "bar", PSI_PER_BAR),
-    ("pressure", re.compile(r"pressure.*mmhg"), "mmHg", PSI_PER_MMHG),
-    ("pressure", re.compile(r"pressure.*\(psi\)"), "psi", 1.0),
+    ("o2", re.compile(r"(\bo2\b|oxygen).*mole fraction"), "mole fraction", 1.0),
+    ("o2", re.compile(r"(\bo2\b|oxygen).*(%|percent)|(%|percent).*(\bo2\b|oxygen)"), "percent", FRAC_PER_PERCENT),
+    ("pressure", re.compile(r"(pressure|^pinit|^approx p).*\(atm\)"), "atm", KPA_PER_ATM),
+    ("pressure", re.compile(r"(pressure|^pinit|^approx p).*\(bar\)"), "bar", KPA_PER_BAR),
+    ("pressure", re.compile(r"pressure.*mmhg"), "mmHg", KPA_PER_MMHG),
+    ("pressure", re.compile(r"pressure.*\(psi\)"), "psi", KPA_PER_PSI),
     ("flow", re.compile(r"(air flow|flow velocity|inlet velocity|air rate).*\(cm/s\)"), "cm/s", 1.0),
 ]
 # Columns that very probably hold the quantity but whose header does not state
 # it in full. They are NOT used; their range is reported for the science lead.
 PENDING = [
-    ("o2", re.compile(r"^xo2"), "mole fraction", 100.0,
+    ("o2", re.compile(r"^xo2"), "mole fraction", 1.0,
      "header is the symbol XO2; it does not state the unit"),
-    ("o2", re.compile(r"^o initial ambient composition; mole fraction"), "mole fraction", 100.0,
+    ("o2", re.compile(r"^o initial ambient composition; mole fraction"), "mole fraction", 1.0,
      "header says \"O\", not O2 (lost subscript; unconfirmed)"),
 ]
 # ---- team rulings of 2026-11-14 on the pending columns ------------------------
@@ -106,8 +109,8 @@ EXPECTED_DOI = {"PSI-69": ("FLEX", "10.60555/mbq8-0451"), "PSI-98": ("Saffire-I"
 
 COLUMNS = ["psi_id", "name", "acronym", "doi", "license", "sub_research_area", "project_type", "flight_platform",
            "hardware", "objective", "fuel", "fuel_phase", "fuel_phase_basis", "sample_geometry",
-           "o2_min_pct", "o2_max_pct", "o2_basis", "o2_stream_min_pct", "o2_stream_max_pct", "o2_stream_basis",
-           "pressure_min_psi", "pressure_max_psi", "pressure_basis",
+           "o2_min_frac", "o2_max_frac", "o2_basis", "o2_stream_min_frac", "o2_stream_max_frac", "o2_stream_basis",
+           "pressure_min_kpa", "pressure_max_kpa", "pressure_basis",
            "flow_speed_min_cm_s", "flow_speed_max_cm_s", "flow_speed_basis", "airflow", "measurements",
            "fire_safety_pillar", "fire_safety_pillar_basis", "data_table_available", "source_url"]
 
@@ -202,15 +205,15 @@ def scan_tables(pid: str) -> tuple[dict, list[dict]]:
                     continue
                 unused.append({"psi_id": pid, "file": path.name, "column": header.strip(), "quantity": q,
                                "reason": why, "status": "needs confirmation",
-                               "would_give_min": round(min(vals) * factor, 2) if vals else "",
-                               "would_give_max": round(max(vals) * factor, 2) if vals else ""})
+                               "would_give_min": round(min(vals) * factor, 4) if vals else "",
+                               "would_give_max": round(max(vals) * factor, 4) if vals else ""})
                 continue
             for q, pat in CANDIDATE.items():
                 if pat.search(h) and not IGNORE.search(h):
                     unused.append({"psi_id": pid, "file": path.name, "column": header.strip(), "quantity": q,
                                    "reason": "header does not state the unit", "status": "not used",
                                    "would_give_min": "", "would_give_max": ""})
-    out = {q: (round(min(v), 2), round(max(v), 2), " ; ".join(basis[q])) for q, v in found.items() if v}
+    out = {q: (round(min(v), 4), round(max(v), 4), " ; ".join(basis[q])) for q, v in found.items() if v}
     return out, unused
 
 
@@ -268,10 +271,10 @@ def main() -> int:
             "fire_safety_pillar_basis": lab["fire_safety_pillar_basis"].strip(),
             "fuel_phase": lab["fuel_phase"].strip().lower(), "fuel_phase_basis": lab["fuel_phase_basis"].strip(),
         })
-        for q, (a, b, c) in (("o2", ("o2_min_pct", "o2_max_pct", "o2_basis")),
-                             ("pressure", ("pressure_min_psi", "pressure_max_psi", "pressure_basis")),
+        for q, (a, b, c) in (("o2", ("o2_min_frac", "o2_max_frac", "o2_basis")),
+                             ("pressure", ("pressure_min_kpa", "pressure_max_kpa", "pressure_basis")),
                              ("flow", ("flow_speed_min_cm_s", "flow_speed_max_cm_s", "flow_speed_basis")),
-                             ("o2_stream", ("o2_stream_min_pct", "o2_stream_max_pct", "o2_stream_basis"))):
+                             ("o2_stream", ("o2_stream_min_frac", "o2_stream_max_frac", "o2_stream_basis"))):
             if q in computed:
                 row[a], row[b], row[c] = computed[q]
         if "o2_stream" in computed:

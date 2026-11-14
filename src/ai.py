@@ -23,7 +23,7 @@ import catalog as cat
 
 # Flash model listed by the API for our key and answering on 2026-11-14
 # (gemini-3.6/3.7/3.8-flash returned 503 "high demand" that day).
-MODEL = "gemini-3.5-flash"
+MODEL = "gemini-3.5-flash-lite"
 TIMEOUT_MS = 90_000  # the service was slow on 2026-11-14: one catalog answer took 51 s
 KEY_ENV = "GEMINI_API_KEY"
 NOT_IN_CATALOG = "NOT_IN_CATALOG"
@@ -222,3 +222,63 @@ def explain_result(facts: list[str], template: str, llm: LLM | None = None) -> d
             return _result(reply.strip(), "ai")
         note = f"The AI text was rejected because {why}."
     return _result(template, "template", note)
+
+
+# ---------------------------------------------------------------------------
+# ask NASA's records (retrieval-augmented: the model sees only the retrieved passages)
+# ---------------------------------------------------------------------------
+NOT_IN_PASSAGES = "NOT_IN_PASSAGES"
+NOT_IN_PASSAGES_REPLY = "The passages retrieved from NASA's records do not answer this question."
+NO_PASSAGES_REPLY = "No passage in NASA's records shares a word with this question."
+SEARCH_LABEL = "Search results from NASA's records (no AI summary)"
+
+RAG_SYSTEM = f"""You answer questions for a spacecraft fire-safety dashboard using passages copied from NASA's \
+Physical Sciences Informatics (PSI) records of combustion investigations. The passages are given in the user \
+message; they are your only source.
+
+Rules:
+- Use only what the passages say. Do not add anything you know from elsewhere.
+- Write the answer as short bullet lines, one claim per line, each line starting with "- ".
+- End every line with the passage_id(s) it is based on in square brackets, exactly as written in the \
+passages, for example [PSI-123-objective-1] or [PSI-123-objective-1, PSI-456-approach-2]. A line without a \
+citation will be discarded.
+- If the passages do not answer the question, reply with exactly {NOT_IN_PASSAGES} and nothing else."""
+
+
+def passages_as_context(passages: list[dict]) -> str:
+    return "\n\n".join(f"[{p['passage_id']}] {p['psi_id']} {p['acronym'] or p['investigation']}, {p['field']}:\n"
+                       f"{p['text']}" for p in passages)
+
+
+def check_passage_citations(text: str, retrieved_ids: set[str]) -> tuple[bool, str]:
+    """True if every non-empty line cites at least one passage_id and every cited id was among the retrieved ones."""
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    if not lines:
+        return False, "the answer is empty"
+    for ln in lines:
+        if not cited_ids(ln):
+            return False, f"a line has no passage citation: \"{ln[:80]}\""
+    unknown = [i for i in cited_ids(text) if i not in retrieved_ids]
+    if unknown:
+        return False, "it cites passage(s) that were not retrieved: " + ", ".join(unknown)
+    return True, ""
+
+
+def answer_from_passages(question: str, passages: list[dict], llm: LLM | None = None) -> dict:
+    """passages: the retrieved passages (src/retrieve.py). The model answers only from them.
+    source is "ai" (checked answer), "search" (no AI summary: show the passages) or "none" (nothing retrieved)."""
+    def result(text, source, label, note="", citations=None):
+        return {"text": text, "source": source, "label": label, "note": note, "citations": citations or []}
+
+    if not passages:
+        return result(NO_PASSAGES_REPLY, "none", SEARCH_LABEL)
+    reply, note = _run(llm, RAG_SYSTEM, f"Passages:\n\n{passages_as_context(passages)}\n\nQuestion: {question}")
+    if reply is not None:
+        reply = reply.strip()
+        if reply == NOT_IN_PASSAGES:
+            return result(NOT_IN_PASSAGES_REPLY, "ai", AI_LABEL)
+        ok, why = check_passage_citations(reply, {p["passage_id"] for p in passages})
+        if ok:
+            return result(reply, "ai", AI_LABEL, citations=cited_ids(reply))
+        note = f"The AI answer was rejected because {why}."
+    return result("", "search", SEARCH_LABEL, note)

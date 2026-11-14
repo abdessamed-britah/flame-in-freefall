@@ -17,8 +17,8 @@ combustion investigations.
 
 ## What the dashboard does
 
-Four pages: **Home** (purpose, data sources, limits), **Catalog**,
-**Suppression Lab** and **Unified Data**.
+Five pages: **Home** (purpose, data sources, limits), **Catalog**,
+**Suppression Lab**, **Unified Data** and **Ask NASA's records**.
 
 **Investigation Catalog.** The 24 investigations that NASA's Physical Sciences
 Informatics (PSI) system lists under Combustion Science, built from NASA's own
@@ -51,9 +51,15 @@ tests. A value is converted only when the source column states its unit;
 the conversion applied. Measurements stay in NASA's original tables, linked by
 PSI id, file and row.
 
-**AI layer.** Ask the catalog a question, or ask for a short explanation of a
-Suppression Lab result. Both are checked before display (see below) and both
-fall back to a plain template when no key is set.
+**Ask NASA's records.** Ask a question in plain words. The six passages of
+NASA's PSI records closest to the question are retrieved, the AI answers only
+from those six, and every claim cites a passage that is shown word for word
+with its PSI link. Five example questions have saved, checked answers so the
+page never waits on the AI service. Without a key, or if the AI fails, the page
+shows the retrieved passages as search results.
+
+**Explain this result.** In the Suppression Lab, a short AI explanation of the
+numbers on the page, checked before display, with a plain template as fallback.
 
 ## NASA data sources
 
@@ -129,6 +135,41 @@ header, original unit, conversion, factor, target column and status.
 A value is converted only when the column header or the PSI record states the
 unit. Units written inside the cells are not read.
 
+## Text corpus and retrieval
+
+`src/build_corpus.py` reads the 24 raw PSI records and writes
+`data/corpus/passages.jsonl`: 558 passages, one per paragraph, each with
+`passage_id`, `psi_id`, `acronym`, `field` and `source_url`. The text is copied
+word for word; only HTML tags and entities are removed.
+
+| Field in the PSI record | Records with text | Passages |
+|---|---|---|
+| title | 24 | 24 |
+| proposalTitle | 11 | 11 |
+| objective | 24 | 46 |
+| approach | 24 | 41 |
+| hypothesis | 24 | 35 |
+| researchImpacts | 24 | 30 |
+| experimentHardware | 19 | 19 |
+| publications: title | 23 | 352 |
+
+The `description` field is empty in all 24 records, and the records hold no
+results text and no publication abstracts. They say what each investigation set
+out to do and how, so the page answers "what was studied", not "what was
+measured".
+
+`src/retrieve.py` ranks passages by TF-IDF cosine similarity (scikit-learn, word
+1-2 grams, top 6), fitted when the app starts. No network and no extra package.
+
+**Retrieval check.** `tests/retrieval_questions.json` holds 10 questions whose
+correct investigation is unambiguous from the records (for example smoke
+particle sizes: SAME or SAME-R). A hit means a passage of the correct
+investigation is among the top 6. Result: **9 of 10**, with no tuning. The miss
+is "Can a commercial particle counter measure dust and aerosols on the space
+station?" (DAFT, PSI-47): the top 6 came from SAME and droplet investigations.
+Known weakness: the 352 publication titles are short, so they often outrank the
+longer objective and approach paragraphs.
+
 ## Validation
 
 Two Gaussian-process models, one per target, trained on the FLEX table. Inputs:
@@ -158,8 +199,8 @@ extrapolates to a new suppressant, and `predict()` reports `in_range = False`
 outside the tested conditions.
 
 The raw FLEX file is audited by `src/audit.py` (45 checks, `reports/audit.md`),
-and 60 automated tests cover the prediction range checks, the catalog scoring,
-the two AI checks and the unified table (every converted value is traced back
+and 72 automated tests cover the prediction range checks, the catalog scoring,
+the AI checks, the corpus, the retrieval and the unified table (every converted value is traced back
 to its source cell, and the FLEX rows are compared with `flex_clean.csv`).
 
 ## Limitations
@@ -204,16 +245,19 @@ to its source cell, and the FLEX rows are compared with `flex_clean.csv`).
 
 ## How AI is used, and how its output is checked
 
-The app calls Google Gemini (`gemini-3.5-flash`, through the `google-genai`
+The app calls Google Gemini (`gemini-3.5-flash-lite`, through the `google-genai`
 SDK) for two things. All AI text is labelled as AI-generated.
 
 | Feature | What the model receives | Check before display |
 |---|---|---|
-| Ask the catalog | The whole catalog and the question | Every line must end with a `[psi_id]` citation, and every cited id must exist in the catalog. Otherwise the answer is rejected. If the catalog has no answer the model must say so. |
+| Ask NASA's records | The question and the 6 retrieved passages, nothing else | Every line must cite a `[passage_id]`, and every cited passage must be one of the 6 retrieved. Otherwise the answer is rejected and the retrieved passages are shown as search results. If the passages do not answer the question the model must say so. |
 | Explain this result | The numbers already on the Suppression Lab page | Every number in the text must be one of those numbers. Otherwise the text is rejected. |
 
 A rejected answer, a failed call, or a missing key all lead to the same place:
-a plain template summary built from the data, labelled as not AI-generated. The
+text built from the data without AI (search results, or a plain template
+summary), labelled as not AI-generated. The five saved answers were generated
+by the same model, passed the same check, and are labelled "saved answer"; a
+test re-runs the check on them. The
 relevance ranking and the predictions never use AI.
 
 ### AI tools used to build the project
@@ -257,6 +301,7 @@ python src/model.py           # reports/validation.md, validation.json, models/
 python src/fetch_psi.py       # data/raw/psi/ (skips files already saved)
 python src/build_catalog.py   # data/catalog/investigations.csv
 python src/normalize.py       # data/unified/tests_conditions.csv, units_map.csv
+python src/build_corpus.py    # data/corpus/passages.jsonl
 python -m pytest tests -q
 ```
 
@@ -275,12 +320,16 @@ data/raw/psi/  PSI records, experimental tables and manifest.csv, untouched
 data/clean/    flex_clean.csv (274 rows), exclusions.csv (tests left out of modelling, per target)
 data/catalog/  investigations.csv, curated_labels.csv, columns_not_used.csv
 data/unified/  tests_conditions.csv (one row per source-table row), units_map.csv
+data/corpus/   passages.jsonl (text of the PSI records), saved_answers.json
 src/           audit.py, clean.py, eda.py, model.py, lab.py, catalog.py, ai.py,
-               fetch_psi.py, build_catalog.py, normalize.py
+               fetch_psi.py, build_catalog.py, normalize.py, build_corpus.py, retrieve.py,
+               build_saved_answers.py (calls the AI service; needs a key)
 models/        saved models (joblib), one per target, written by src/model.py
-app/           Home.py, pages/1_Catalog.py, pages/2_Suppression_Lab.py, pages/3_Unified_Data.py
+app/           Home.py, pages/1_Catalog.py, pages/2_Suppression_Lab.py, pages/3_Unified_Data.py,
+               pages/4_Ask_NASA_Records.py
 reports/       audit.md, eda.md, validation.md, validation.json, figures/
-tests/         test_predict.py, test_catalog.py, test_ai.py, test_normalize.py, fixtures/
+tests/         test_predict.py, test_catalog.py, test_ai.py, test_normalize.py, test_retrieve.py,
+               retrieval_questions.json, fixtures/
 ```
 
 - `models/` holds `burning_rate_k.joblib` and `d_ext_over_d0.joblib`. They load

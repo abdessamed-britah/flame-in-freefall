@@ -1,0 +1,12 @@
+[
+  {"question": "How large are smoke particles in low gravity, and what does that mean for spacecraft smoke detectors?", "expected": ["PSI-101", "PSI-102"]},
+  {"question": "How effective are CO2 and helium at suppressing a burning fuel droplet?", "expected": ["PSI-69"]},
+  {"question": "How does an electric field affect a flame?", "expected": ["PSI-22"]},
+  {"question": "How rapidly does a large-scale fire grow in low gravity?", "expected": ["PSI-98", "PSI-99", "PSI-100"]},
+  {"question": "Which experiment uses a gas burner to emulate the burning of solid and liquid fuels?", "expected": ["PSI-20"]},
+  {"question": "Under what conditions do cool diffusion flames occur for propane, n-butane and n-pentane?", "expected": ["PSI-159"]},
+  {"question": "Can a commercial particle counter measure dust and aerosols on the space station?", "expected": ["PSI-47"]},
+  {"question": "What is the smoke point of a co-flow laminar jet flame?", "expected": ["PSI-107"]},
+  {"question": "How do bi-component fuel droplets burn under conditions that mimic real combustors?", "expected": ["PSI-68"]},
+  {"question": "How do n-dodecane and iso-dodecane droplets burn at pressures up to 5 atm?", "expected": ["PSI-39"]}
+]

@@ -1,0 +1,94 @@
+[
+  {
+    "question": "What does the FLEX investigation aim to learn about fire suppressants such as CO2 and helium?",
+    "text": "- Measure the effectiveness of various gaseous fire suppressants such as CO2, He, and SF6 [PSI-69-objective-1]\n- Systematically analyze the effects of different ambient conditions and suppressant concentrations [PSI-69-objective-1]",
+    "citations": [
+      "PSI-69-objective-1"
+    ],
+    "retrieved_ids": [
+      "PSI-69-objective-1",
+      "PSI-98-objective-1",
+      "PSI-100-objective-1",
+      "PSI-39-title-1",
+      "PSI-68-pub-33",
+      "PSI-69-pub-45"
+    ],
+    "model": "gemini-3.5-flash-lite",
+    "saved_utc": "2026-11-14 21:57"
+  },
+  {
+    "question": "Why did NASA measure smoke particle sizes in low gravity?",
+    "text": "- To understand smoke particle sizes in low-gravity and their implications for spacecraft smoke detector design [PSI-102-pub-3].\n- To evaluate low-gravity smoke particulate for spacecraft fire detection [PSI-101-pub-2].",
+    "citations": [
+      "PSI-102-pub-3",
+      "PSI-101-pub-2"
+    ],
+    "retrieved_ids": [
+      "PSI-102-pub-3",
+      "PSI-102-pub-1",
+      "PSI-102-pub-12",
+      "PSI-101-pub-2",
+      "PSI-102-pub-4",
+      "PSI-102-pub-2"
+    ],
+    "model": "gemini-3.5-flash-lite",
+    "saved_utc": "2026-11-14 21:57"
+  },
+  {
+    "question": "How rapidly does a large-scale fire grow in low gravity?",
+    "text": "- One of the objectives of SAFFIRE-I is to determine how rapidly a large-scale fire grows in low-gravity [PSI-98-objective-2].\n- One of the objectives of SAFFIRE-III is to determine how rapidly a large-scale fire grows in low-gravity [PSI-100-objective-2].\n- An objective of SAFFIRE-II is to determine how rapidly a large-scale fire grows in low-gravity [PSI-99-objective-1].",
+    "citations": [
+      "PSI-98-objective-2",
+      "PSI-100-objective-2",
+      "PSI-99-objective-1"
+    ],
+    "retrieved_ids": [
+      "PSI-98-objective-2",
+      "PSI-100-objective-2",
+      "PSI-99-objective-1",
+      "PSI-102-pub-12",
+      "PSI-102-pub-1",
+      "PSI-101-pub-2"
+    ],
+    "model": "gemini-3.5-flash-lite",
+    "saved_utc": "2026-11-14 21:57"
+  },
+  {
+    "question": "Which experiment uses a gas burner to emulate the burning of solid and liquid fuels?",
+    "text": "- PSI-20 ACME BRE uses an emulating gas burner to study the ignition and extinction of small-scale fires and emulate condensed-phase burning [PSI-20-pub-2, PSI-20-pub-12].\n- PSI-20 ACME BRE employs a Burning Rate Emulator (BRE) involving liquid and gas fueled flames towards developing a burning rate emulator for microgravity applications [PSI-20-pub-3].",
+    "citations": [
+      "PSI-20-pub-2",
+      "PSI-20-pub-12",
+      "PSI-20-pub-3"
+    ],
+    "retrieved_ids": [
+      "PSI-20-pub-2",
+      "PSI-20-pub-12",
+      "PSI-20-hypothesis-2",
+      "PSI-20-pub-3",
+      "PSI-68-impacts-1",
+      "PSI-68-pub-38"
+    ],
+    "model": "gemini-3.5-flash-lite",
+    "saved_utc": "2026-11-14 21:57"
+  },
+  {
+    "question": "How do low-gravity flammability limits compare with NASA's normal-gravity material screening test?",
+    "text": "- Low-gravity flammability limits are investigated and compared to those obtained in NASA’s normal gravity material flammability screening test [PSI-100-objective-2, PSI-99-objective-1, PSI-98-objective-2].",
+    "citations": [
+      "PSI-100-objective-2",
+      "PSI-99-objective-1",
+      "PSI-98-objective-2"
+    ],
+    "retrieved_ids": [
+      "PSI-98-objective-3",
+      "PSI-100-objective-2",
+      "PSI-99-objective-1",
+      "PSI-98-objective-2",
+      "PSI-26-pub-3",
+      "PSI-102-pub-12"
+    ],
+    "model": "gemini-3.5-flash-lite",
+    "saved_utc": "2026-11-14 21:58"
+  }
+]

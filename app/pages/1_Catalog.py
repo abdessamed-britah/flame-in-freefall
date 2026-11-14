@@ -10,7 +10,6 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-import ai  # noqa: E402
 import catalog as cat  # noqa: E402
 
 st.set_page_config(page_title="Investigation Catalog", layout="wide")
@@ -118,17 +117,6 @@ with right:
         st.caption("No investigation matches the filters.")
 
 # ---------------------------------------------------------------- Q&A
-st.subheader("Ask the catalog")
-st.caption("Answers come only from the catalog rows above and cite the PSI id for every claim. "
-           + ("" if ai.has_key() else f"No AI key is set ({ai.KEY_ENV}), so a template summary is shown instead."))
-question = st.text_input("Question", placeholder="Which investigations tested solid fuels at 30% O2 or more?")
-if question:
-    with st.spinner("Reading the catalog..."):
-        out = ai.answer_catalog_question(question, df)
-    st.caption(out["label"])
-    st.markdown(out["text"])
-    if out["citations"]:
-        links = df.set_index("psi_id")["source_url"]
-        st.caption("Cited: " + ", ".join(f"[{i}]({links[i]})" if links.get(i) else i for i in out["citations"]))
-    if out["note"]:
-        st.caption(out["note"])
+st.subheader("Ask a question")
+st.markdown("Questions are now answered on the **Ask NASA Records** page (sidebar): it searches the full text of "
+            "NASA's records and cites the passage behind every claim.")

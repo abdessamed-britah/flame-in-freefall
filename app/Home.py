@@ -50,6 +50,9 @@ with b:
 st.markdown("**Unified data** brings the test conditions of every PSI experimental table into one file with "
             "the same units, to filter, plot and download. Open **Unified Data** in the sidebar.")
 
+st.markdown("**Ask NASA's records** answers questions only from passages copied from the PSI records, and shows "
+            "the passage behind every claim. Open **Ask NASA Records** in the sidebar.")
+
 st.subheader("Data sources")
 st.markdown(
     f"- **NASA PSI-69, Flame Extinguishment Experiment (FLEX)**, experimental table, CC0: "

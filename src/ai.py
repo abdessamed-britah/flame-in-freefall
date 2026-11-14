@@ -47,13 +47,10 @@ def call_claude(system: str, user: str) -> str:
         raise AIUnavailable("the anthropic package is not installed") from e
     try:
         client = anthropic.Anthropic()
-        resp = client.beta.messages.create(
+        resp = client.messages.create(
             model=MODEL,
             max_tokens=16000,
             output_config={"effort": "medium"},
-            # If a safety classifier declines the request, the API retries it on a fallback model.
-            betas=["server-side-fallback-2026-07-01"],
-            fallbacks="default",
             system=system,
             messages=[{"role": "user", "content": user}],
         )

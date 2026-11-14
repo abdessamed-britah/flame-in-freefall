@@ -24,8 +24,11 @@ def catalog_data():
 df, is_fixture = catalog_data()
 
 st.title("Investigation Catalog")
-st.caption("NASA PSI combustion investigations, filled in by hand by the team from the PSI pages. "
-           "A cell the PSI page does not answer is left blank and shown as \"not stated\".")
+st.caption("NASA PSI investigations whose research area is Combustion Science, built from NASA's own PSI "
+           "records. O2, pressure and flow ranges are computed from an investigation's experimental table only "
+           "when a column header states the quantity and unit; the column used is shown beside them. "
+           "Pillar and fuel phase are the team's labels, each with its basis. "
+           "A cell with no source is left blank and shown as \"not stated\".")
 if is_fixture:
     st.error("**Placeholder data.** `data/catalog/investigations.csv` does not exist yet, so this page is "
              f"showing {len(df)} made-up placeholder rows from `tests/fixtures/`. They are not NASA "

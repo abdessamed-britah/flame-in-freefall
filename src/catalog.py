@@ -20,9 +20,25 @@ NOT_STATED = "not stated"
 TEXT_COLUMNS = ["psi_id", "name", "doi", "objective", "fuel", "fuel_phase", "sample_geometry", "hardware",
                 "airflow", "measurements", "fire_safety_pillar", "data_table_available", "source_url"]
 NUMERIC_COLUMNS = ["o2_min_pct", "o2_max_pct", "pressure_min_psi", "pressure_max_psi"]
-COLUMNS = TEXT_COLUMNS + NUMERIC_COLUMNS
+REQUIRED = TEXT_COLUMNS + NUMERIC_COLUMNS
+# Written by src/build_catalog.py; optional so that older files and the test fixture still load.
+OPTIONAL_TEXT = ["acronym", "license", "sub_research_area", "project_type", "flight_platform",
+                 "fuel_phase_basis", "fire_safety_pillar_basis", "o2_basis", "pressure_basis", "flow_speed_basis"]
+OPTIONAL_NUMERIC = ["flow_speed_min_cm_s", "flow_speed_max_cm_s"]
+# display order
+COLUMNS = ["psi_id", "acronym", "name", "fire_safety_pillar", "fire_safety_pillar_basis", "fuel_phase",
+           "fuel_phase_basis", "fuel", "sample_geometry", "hardware", "flight_platform", "project_type",
+           "sub_research_area", "o2_min_pct", "o2_max_pct", "o2_basis", "pressure_min_psi", "pressure_max_psi",
+           "pressure_basis", "airflow", "flow_speed_min_cm_s", "flow_speed_max_cm_s", "flow_speed_basis",
+           "measurements", "data_table_available", "objective", "doi", "license", "source_url"]
 
 LABELS = {
+    "acronym": "Acronym", "license": "License", "sub_research_area": "Sub research area",
+    "project_type": "Project type", "flight_platform": "Flight platform",
+    "fuel_phase_basis": "Fuel phase: basis", "fire_safety_pillar_basis": "Pillar: basis",
+    "o2_basis": "O2: column used", "pressure_basis": "Pressure: column used",
+    "flow_speed_basis": "Flow speed: column used", "flow_speed_min_cm_s": "Flow speed min (cm/s)",
+    "flow_speed_max_cm_s": "Flow speed max (cm/s)",
     "psi_id": "PSI id", "name": "Name", "doi": "DOI", "objective": "Objective", "fuel": "Fuel",
     "fuel_phase": "Fuel phase", "sample_geometry": "Sample geometry", "hardware": "Hardware",
     "o2_min_pct": "O2 min (%)", "o2_max_pct": "O2 max (%)", "pressure_min_psi": "Pressure min (psi)",
@@ -70,14 +86,17 @@ def load_catalog() -> tuple[pd.DataFrame, bool]:
 def read_catalog(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path, dtype=str, keep_default_na=False, encoding="utf-8-sig")
     df.columns = [c.strip() for c in df.columns]
-    missing = [c for c in COLUMNS if c not in df.columns]
+    missing = [c for c in REQUIRED if c not in df.columns]
     if missing:
         raise ValueError(f"{path.name} is missing column(s): {', '.join(missing)}")
-    for c in TEXT_COLUMNS:
+    for c in OPTIONAL_TEXT + OPTIONAL_NUMERIC:
+        if c not in df.columns:
+            df[c] = ""
+    for c in TEXT_COLUMNS + OPTIONAL_TEXT:
         df[c] = df[c].str.strip()
     for c in ("fuel_phase", "fire_safety_pillar", "data_table_available"):
         df[c] = df[c].str.lower()
-    for c in NUMERIC_COLUMNS:  # blank stays missing; anything else must be a number
+    for c in NUMERIC_COLUMNS + OPTIONAL_NUMERIC:  # blank stays missing; anything else must be a number
         col = df[c].str.strip()
         df[c] = pd.to_numeric(col.where(col != ""), errors="raise").astype(float)
     if df["psi_id"].eq("").any() or df["psi_id"].duplicated().any():

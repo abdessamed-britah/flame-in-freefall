@@ -36,10 +36,31 @@ python -m pytest tests -q
 
 ## Catalog file
 
-The Catalog page reads `data/catalog/investigations.csv` (UTF-8, one row per PSI
-investigation, filled by hand from the PSI pages). Until that file exists the
-page shows three made-up placeholder rows from `tests/fixtures/` under a red
-banner. Leave a cell blank when PSI does not say; never guess. Columns:
+The Catalog page reads `data/catalog/investigations.csv`: the 24 NASA PSI
+investigations whose research area is Combustion Science. It is built from
+NASA's own records, never from memory:
+
+```
+python src/fetch_psi.py       # PSI records and experimental tables -> data/raw/psi/ (+ manifest.csv)
+python src/build_catalog.py   # -> data/catalog/investigations.csv
+```
+
+- `data/raw/psi/` holds each raw PSI response untouched; `manifest.csv` lists the
+  URL, access time and SHA-256 of every file. Only metadata and
+  experimental-table CSVs are fetched (no raw data, images or video).
+- Text cells are verbatim from the PSI record.
+- O2, pressure and flow-speed ranges are computed from an investigation's
+  experimental table only when a column header states the quantity and unit;
+  the `*_basis` cell names the column used. Relevant columns that do not meet
+  that rule are listed in `data/catalog/columns_not_used.csv`.
+- `data/catalog/curated_labels.csv` holds the team's labels
+  (`fire_safety_pillar`, `fuel_phase`), each with a basis. It is pre-filled only
+  with what the challenge brief states and is never overwritten by the build:
+  **edit this file to add labels, then rerun `build_catalog.py`.**
+- `fuel`, `sample_geometry` and `measurements` are blank: no PSI field states them.
+
+If the catalog file is missing, the page shows three made-up placeholder rows
+from `tests/fixtures/` under a red banner. Main columns:
 
 | Column | Content |
 |---|---|
@@ -78,8 +99,10 @@ not already on the page.
 ```
 data/raw/      NASA file, untouched
 data/clean/    flex_clean.csv (274 rows), exclusions.csv (tests left out of modelling, per target)
-data/catalog/  investigations.csv (added by the team; not present yet)
-src/           audit.py, clean.py, eda.py, model.py, lab.py, catalog.py, ai.py
+data/raw/psi/  PSI records, experimental tables and manifest.csv, untouched
+data/catalog/  investigations.csv, curated_labels.csv, columns_not_used.csv
+src/           audit.py, clean.py, eda.py, model.py, lab.py, catalog.py, ai.py,
+               fetch_psi.py, build_catalog.py
 models/        saved models (joblib), one per target, written by src/model.py
 app/           Home.py, pages/1_Catalog.py, pages/2_Suppression_Lab.py
 reports/       audit.md, eda.md, validation.md, validation.json, figures/

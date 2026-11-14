@@ -1,0 +1,25 @@
+psi_id,acronym,name,fire_safety_pillar,fire_safety_pillar_basis,fuel_phase,fuel_phase_basis
+PSI-10,ACME/Flame Design,Advanced Combustion via Microgravity Experiments / Flame Design,,,gas,challenge brief
+PSI-20,ACME BRE,Advanced Combustion via Microgravity Experiments - Burning Rate Emulator,,,gas,challenge brief
+PSI-21,ACME CLD Flame,Advanced Combustion via Microgravity Experiments / Coflow Laminar Diffusion Flame,,,gas,challenge brief
+PSI-22,ACME E-FIELD Flames,Advanced Combustion via Microgravity Experiments Electric-Field Effects on Laminar Diffusion Flames,,,gas,challenge brief
+PSI-23,ACME s-Flame,Advanced Combustion via Microgravity Experiments-Structure and Response of Spherical Diffusion Flames,,,gas,challenge brief
+PSI-25,BASS-II,Burning and Suppression of Solids - II,prevention,challenge brief,solid,challenge brief
+PSI-26,BASS,Burning and Suppression of Solids,prevention,challenge brief,solid,challenge brief
+PSI-39,CFI,Cool Flames Investigation,,,liquid,challenge brief
+PSI-47,DAFT / DAFT-2,Dust and Aerosol Measurement Feasibility Test / Dust and Aerosol Measurement Feasibility Test-2,detection,challenge brief,,
+PSI-60,,Computational and Experimental Analysis of SPICE Data Sets,,,,
+PSI-62,,Concurrent Flame Spread Modeling using Flamelet Generated Manifolds in Microgravity with Comparison to BASS Experiments using Two-Color Tomography,,,,
+PSI-68,FLEX-2,Flame Extinguishment Experiment - 2,,,liquid,challenge brief
+PSI-69,FLEX,Flame Extinguishment Experiment,suppression,challenge brief,liquid,challenge brief
+PSI-98,SAFFIRE-I,Spacecraft Fire Safety Experiment-I,prevention,challenge brief,solid,challenge brief
+PSI-99,SAFFIRE-II,Spacecraft Fire Experiment-II,prevention,challenge brief,solid,challenge brief
+PSI-100,SAFFIRE-III,Spacecraft Fire Experiment-III,prevention,challenge brief,solid,challenge brief
+PSI-101,SAME-R,Smoke Aerosol Measurement Experiment-Reflight,detection,challenge brief,,
+PSI-102,SAME,Smoke and Aerosol Measurement Experiment,detection,challenge brief,,
+PSI-106,SLICE,Structure and Liftoff In Combustion Experiment,,,,
+PSI-107,SPICE,Smoke Point In Co-flow Experiment,,,,
+PSI-115,,Utilization of the Smoke Aerosol Measurement Experiment Data for Advanced Modeling and Simulation of Smoke Generation in Micro-Gravity,,,,
+PSI-117,,Effect of External Thermo-Convective Perturbation on Cool Flame Dynamics: A Multidimensional Multi-Physics CFD Analysis,,,,
+PSI-142,,Quantitative Studies of Cool Flame Transitions at Radiation / Stretch Extinction Using Counterflow Flames,,,,
+PSI-159,ACME CFI-G,Advanced Combustion via Microgravity Experiments / Cool Flames Investigation with Gases,,,gas,challenge brief

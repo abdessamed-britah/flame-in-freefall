@@ -21,7 +21,7 @@ import pandas as pd
 
 import catalog as cat
 
-MODEL = "claude-opus-5-5"
+MODEL = "claude-haiku-5-5"  # cheap and fast; team choice
 KEY_ENV = "ANTHROPIC_API_KEY"
 NOT_IN_CATALOG = "NOT_IN_CATALOG"
 NOT_IN_CATALOG_REPLY = "The catalog does not contain the answer to this question."

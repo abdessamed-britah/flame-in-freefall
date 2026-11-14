@@ -67,6 +67,18 @@ PENDING = [
     ("o2", re.compile(r"^o initial ambient composition; mole fraction"), "mole fraction", 100.0,
      "header says \"O\", not O2 (lost subscript; unconfirmed)"),
 ]
+# ---- team rulings of 2026-11-14 on the pending columns ------------------------
+# PSI-69 FLEX: the "O" column is accepted as ambient O2. The build checks the
+# stated reason (the four gas columns sum to 1) before using it.
+FLEX_ID = "PSI-69"
+FLEX_GAS = re.compile(r"^(o|n|co|he) initial ambient composition; mole fraction")
+FLEX_SUM_TOLERANCE = 0.021  # fractions are printed to 2 decimals; sums run 0.98 to 1.01
+# PSI-10 and PSI-159: XO2 is the O2 fraction of the oxidizer stream, not of the
+# ambient atmosphere. It is shown in its own columns and never used for the
+# habitat O2 criterion.
+STREAM_O2_IDS = {"PSI-10", "PSI-159"}
+STREAM_O2_LABEL = "oxidizer-stream O2, not ambient atmosphere"
+
 # Other headers that mention the quantity without a unit.
 CANDIDATE = {"o2": re.compile(r"\bo2\b|oxygen|atmosphere"), "pressure": re.compile(r"pressure"),
              "flow": re.compile(r"air flow|velocity|air rate")}
@@ -81,9 +93,11 @@ BRIEF_LABELS = {
     "SAFFIRE-III": ("prevention", "solid"),
     "SAME": ("detection", ""), "SAME-R": ("detection", ""), "DAFT / DAFT-2": ("detection", ""),
     "FLEX": ("suppression", "liquid"), "FLEX-2": ("", "liquid"), "CFI": ("", "liquid"),
-    "ACME/Flame Design": ("", "gas"), "ACME BRE": ("", "gas"), "ACME CLD Flame": ("", "gas"),
+    "ACME/Flame Design": ("", "gas"), "ACME BRE": ("prevention", "gas"), "ACME CLD Flame": ("", "gas"),
     "ACME E-FIELD Flames": ("", "gas"), "ACME s-Flame": ("", "gas"), "ACME CFI-G": ("", "gas"),
 }
+# pillar basis where it is more specific than "challenge brief" (team ruling 2026-11-14)
+PILLAR_BASIS = {"ACME BRE": "challenge brief: prevention depends on material selection and flammability limits"}
 
 # ids and DOIs read from PSI pages by the team, to cross-check
 EXPECTED_DOI = {"PSI-69": ("FLEX", "10.60555/mbq8-0451"), "PSI-98": ("Saffire-I", "10.60555/0t15-1z43"),
@@ -92,7 +106,8 @@ EXPECTED_DOI = {"PSI-69": ("FLEX", "10.60555/mbq8-0451"), "PSI-98": ("Saffire-I"
 
 COLUMNS = ["psi_id", "name", "acronym", "doi", "license", "sub_research_area", "project_type", "flight_platform",
            "hardware", "objective", "fuel", "fuel_phase", "fuel_phase_basis", "sample_geometry",
-           "o2_min_pct", "o2_max_pct", "o2_basis", "pressure_min_psi", "pressure_max_psi", "pressure_basis",
+           "o2_min_pct", "o2_max_pct", "o2_basis", "o2_stream_min_pct", "o2_stream_max_pct", "o2_stream_basis",
+           "pressure_min_psi", "pressure_max_psi", "pressure_basis",
            "flow_speed_min_cm_s", "flow_speed_max_cm_s", "flow_speed_basis", "airflow", "measurements",
            "fire_safety_pillar", "fire_safety_pillar_basis", "data_table_available", "source_url"]
 
@@ -132,10 +147,22 @@ def column_values(rows: list[list[str]], j: int, unit: str) -> tuple[list[float]
     return vals, skipped
 
 
+def flex_gas_sums(rows: list[list[str]]) -> tuple[float, float, int]:
+    """Check the reason given for reading FLEX's "O" column as O2: the four gas
+    fractions of every row must sum to 1 within rounding. Stops the build if not."""
+    cols = [j for j, h in enumerate(rows[0]) if FLEX_GAS.search(h.strip().lower())]
+    if len(cols) != 4:
+        raise ValueError("FLEX table: expected the four gas columns O, N, CO, He")
+    sums = [round(sum(float(r[j]) for j in cols), 2) for r in rows[1:]]
+    if any(abs(s - 1) > FLEX_SUM_TOLERANCE for s in sums):
+        raise ValueError("FLEX table: gas fractions do not sum to 1; the ruling's reason no longer holds")
+    return min(sums), max(sums), len(sums)
+
+
 def scan_tables(pid: str) -> tuple[dict, list[dict]]:
     """Returns ({quantity: (min, max, basis)}, [columns not used])."""
-    found: dict[str, list] = {"o2": [], "pressure": [], "flow": []}
-    basis: dict[str, list[str]] = {"o2": [], "pressure": [], "flow": []}
+    found: dict[str, list] = {"o2": [], "pressure": [], "flow": [], "o2_stream": []}
+    basis: dict[str, list[str]] = {"o2": [], "pressure": [], "flow": [], "o2_stream": []}
     unused = []
     for path in sorted((RAW / "tables" / pid).glob("*.csv")) if (RAW / "tables" / pid).exists() else []:
         rows = read_table(path)
@@ -161,6 +188,18 @@ def scan_tables(pid: str) -> tuple[dict, list[dict]]:
             if pend:
                 q, _, unit, factor, why = pend
                 vals, _ = column_values(rows, j, unit)
+                if pid == FLEX_ID and h.startswith("o initial") and vals:
+                    lo, hi, n = flex_gas_sums(rows)
+                    found["o2"] += [v * factor for v in vals]
+                    basis["o2"].append(
+                        f"{path.name} | column \"{header.strip()}\" ({unit}) | {len(vals)} values | team ruling: "
+                        f"header subscript lost; O+N+CO+He sum to 1 in every row "
+                        f"({lo:.2f} to {hi:.2f} over {n} rows, rounding), so O = O2")
+                    continue
+                if pid in STREAM_O2_IDS and h.startswith("xo2") and vals:
+                    found["o2_stream"] += [v * factor for v in vals]
+                    basis["o2_stream"].append(f"{path.name} | column \"{header.strip()}\" | {len(vals)} values")
+                    continue
                 unused.append({"psi_id": pid, "file": path.name, "column": header.strip(), "quantity": q,
                                "reason": why, "status": "needs confirmation",
                                "would_give_min": round(min(vals) * factor, 2) if vals else "",
@@ -185,10 +224,11 @@ def curated_labels(records: list[dict]) -> pd.DataFrame:
     for r in records:
         if r["accession"] in set(existing["psi_id"]):
             continue
-        pillar, phase = BRIEF_LABELS.get(tidy(r.get("investigationAcronym")), ("", ""))
-        new.append({"psi_id": r["accession"], "acronym": tidy(r.get("investigationAcronym")),
+        acr = tidy(r.get("investigationAcronym"))
+        pillar, phase = BRIEF_LABELS.get(acr, ("", ""))
+        new.append({"psi_id": r["accession"], "acronym": acr,
                     "name": tidy(r.get("title")), "fire_safety_pillar": pillar,
-                    "fire_safety_pillar_basis": BRIEF if pillar else "", "fuel_phase": phase,
+                    "fire_safety_pillar_basis": PILLAR_BASIS.get(acr, BRIEF) if pillar else "", "fuel_phase": phase,
                     "fuel_phase_basis": BRIEF if phase else ""})
     if new:
         existing = pd.concat([existing, pd.DataFrame(new, columns=cols)], ignore_index=True)
@@ -230,9 +270,12 @@ def main() -> int:
         })
         for q, (a, b, c) in (("o2", ("o2_min_pct", "o2_max_pct", "o2_basis")),
                              ("pressure", ("pressure_min_psi", "pressure_max_psi", "pressure_basis")),
-                             ("flow", ("flow_speed_min_cm_s", "flow_speed_max_cm_s", "flow_speed_basis"))):
+                             ("flow", ("flow_speed_min_cm_s", "flow_speed_max_cm_s", "flow_speed_basis")),
+                             ("o2_stream", ("o2_stream_min_pct", "o2_stream_max_pct", "o2_stream_basis"))):
             if q in computed:
                 row[a], row[b], row[c] = computed[q]
+        if "o2_stream" in computed:
+            row["o2_stream_basis"] = f"{STREAM_O2_LABEL} (team ruling) | " + row["o2_stream_basis"]
         if "flow" in computed:
             lo, hi, _ = computed["flow"]
             row["airflow"] = f"{lo:g} cm/s" if lo == hi else f"{lo:g} to {hi:g} cm/s"

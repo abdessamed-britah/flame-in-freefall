@@ -23,12 +23,14 @@ NUMERIC_COLUMNS = ["o2_min_pct", "o2_max_pct", "pressure_min_psi", "pressure_max
 REQUIRED = TEXT_COLUMNS + NUMERIC_COLUMNS
 # Written by src/build_catalog.py; optional so that older files and the test fixture still load.
 OPTIONAL_TEXT = ["acronym", "license", "sub_research_area", "project_type", "flight_platform",
-                 "fuel_phase_basis", "fire_safety_pillar_basis", "o2_basis", "pressure_basis", "flow_speed_basis"]
-OPTIONAL_NUMERIC = ["flow_speed_min_cm_s", "flow_speed_max_cm_s"]
+                 "fuel_phase_basis", "fire_safety_pillar_basis", "o2_basis", "pressure_basis", "flow_speed_basis",
+                 "o2_stream_basis"]
+OPTIONAL_NUMERIC = ["flow_speed_min_cm_s", "flow_speed_max_cm_s", "o2_stream_min_pct", "o2_stream_max_pct"]
 # display order
 COLUMNS = ["psi_id", "acronym", "name", "fire_safety_pillar", "fire_safety_pillar_basis", "fuel_phase",
            "fuel_phase_basis", "fuel", "sample_geometry", "hardware", "flight_platform", "project_type",
-           "sub_research_area", "o2_min_pct", "o2_max_pct", "o2_basis", "pressure_min_psi", "pressure_max_psi",
+           "sub_research_area", "o2_min_pct", "o2_max_pct", "o2_basis", "o2_stream_min_pct", "o2_stream_max_pct",
+           "o2_stream_basis", "pressure_min_psi", "pressure_max_psi",
            "pressure_basis", "airflow", "flow_speed_min_cm_s", "flow_speed_max_cm_s", "flow_speed_basis",
            "measurements", "data_table_available", "objective", "doi", "license", "source_url"]
 
@@ -39,6 +41,9 @@ LABELS = {
     "o2_basis": "O2: column used", "pressure_basis": "Pressure: column used",
     "flow_speed_basis": "Flow speed: column used", "flow_speed_min_cm_s": "Flow speed min (cm/s)",
     "flow_speed_max_cm_s": "Flow speed max (cm/s)",
+    "o2_stream_min_pct": "Oxidizer-stream O2 min (%), not ambient",
+    "o2_stream_max_pct": "Oxidizer-stream O2 max (%), not ambient",
+    "o2_stream_basis": "Oxidizer-stream O2: column used",
     "psi_id": "PSI id", "name": "Name", "doi": "DOI", "objective": "Objective", "fuel": "Fuel",
     "fuel_phase": "Fuel phase", "sample_geometry": "Sample geometry", "hardware": "Hardware",
     "o2_min_pct": "O2 min (%)", "o2_max_pct": "O2 max (%)", "pressure_min_psi": "Pressure min (psi)",
@@ -156,8 +161,15 @@ def criterion_scores(row: pd.Series, pillar: str, o2_pct: float, pressure_psi: f
 
 def criterion_inputs(row: pd.Series) -> dict:
     """The catalog cells each criterion was computed from, as displayed."""
+    if stated(row["o2_max_pct"]):
+        o2 = show(row["o2_max_pct"])
+    elif stated(row.get("o2_stream_max_pct")):
+        o2 = (f"scored 0: O2 up to {show(row['o2_stream_max_pct'])}% is oxidizer-stream O2, "
+              "not ambient atmosphere")
+    else:
+        o2 = NOT_STATED
     return {"pillar": show(row["fire_safety_pillar"]), "phase": show(row["fuel_phase"]),
-            "o2": show(row["o2_max_pct"]) if stated(row["o2_max_pct"]) else NOT_STATED,
+            "o2": o2,
             "pressure": (f"{show(row['pressure_min_psi'])} to {show(row['pressure_max_psi'])}"
                          if stated(row["pressure_min_psi"]) or stated(row["pressure_max_psi"]) else NOT_STATED),
             "data": show(row["data_table_available"])}
@@ -172,12 +184,24 @@ def rank(df: pd.DataFrame, weights: dict, pillar: str, o2_pct: float, pressure_p
     for _, r in df.iterrows():
         s = criterion_scores(r, pillar, o2_pct, pressure_psi, pressure_rule)
         points = {k: (100 * weights[k] * s[k] / total if total else 0.0) for k in CRITERIA}
-        rows.append({"psi_id": r["psi_id"], "name": r["name"], "score": sum(points.values()),
+        rows.append({"psi_id": r["psi_id"], "acronym": r.get("acronym", ""), "name": r["name"],
+                     "score": round(sum(points.values()), 6),
                      **{f"points_{k}": points[k] for k in CRITERIA},
                      **{f"cell_{k}": v for k, v in criterion_inputs(r).items()},
                      "source_url": r["source_url"]})
     out = pd.DataFrame(rows)
-    return out.sort_values(["score", "psi_id"], ascending=[False, True]).reset_index(drop=True) if len(out) else out
+    if not len(out):
+        return out
+    # Highest score first; ties in alphabetical order of acronym (no acronym last), then PSI number.
+    out["_no_acr"] = out["acronym"] == ""
+    out["_acr"] = out["acronym"].str.lower()
+    out["_num"] = pd.to_numeric(out["psi_id"].str.extract(r"(\d+)$")[0], errors="coerce").fillna(0)
+    out = out.sort_values(["score", "_no_acr", "_acr", "_num", "psi_id"],
+                          ascending=[False, True, True, True, True]).reset_index(drop=True)
+    place = out["score"].rank(method="min", ascending=False).astype(int)
+    tied = out["score"].duplicated(keep=False)
+    out.insert(0, "rank", [f"={p}" if t else str(p) for p, t in zip(place, tied)])
+    return out.drop(columns=["_no_acr", "_acr", "_num"])
 
 
 # ---------------------------------------------------------------------------

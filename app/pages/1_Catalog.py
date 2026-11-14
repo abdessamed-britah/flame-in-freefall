@@ -96,20 +96,23 @@ with right:
                f"when its highest O2 is at least {o2_target:g}%, and the pressure criterion when {rule} "
                f"{p_target:g} psi. A blank cell scores zero. This is a transparent sum, not an AI score.")
     if len(ranked):
-        score = ranked[["psi_id", "name", "score"] + [f"points_{k}" for k in cat.CRITERIA] + ["source_url"]].copy()
-        score.insert(0, "Rank", range(1, len(score) + 1))
+        score = ranked[["rank", "psi_id", "acronym", "name", "score"] + [f"points_{k}" for k in cat.CRITERIA]
+                       + ["source_url"]].copy()
         st.dataframe(
-            score.rename(columns={"psi_id": "PSI id", "name": "Name", "score": "Score", "source_url": "PSI page",
+            score.rename(columns={"rank": "Rank", "psi_id": "PSI id", "acronym": "Acronym", "name": "Name",
+                                  "score": "Score", "source_url": "PSI page",
                                   **{f"points_{k}": f"Points: {k}" for k in cat.CRITERIA}}),
             hide_index=True, width="stretch",
             column_config={"PSI page": st.column_config.LinkColumn(display_text="Open PSI page"),
                            "Score": st.column_config.ProgressColumn(format="%.0f", min_value=0, max_value=100),
                            **{f"Points: {k}": st.column_config.NumberColumn(format="%.0f", help=cat.CRITERIA[k])
                               for k in cat.CRITERIA}})
+        st.caption("\"=\" marks a tie; tied investigations are listed in alphabetical order of acronym.")
         st.markdown("**Catalog cells behind each criterion**")
         st.dataframe(ranked[["psi_id"] + [f"cell_{k}" for k in cat.CRITERIA]].rename(
             columns={"psi_id": "PSI id", "cell_pillar": "Pillar", "cell_phase": "Fuel phase",
-                     "cell_o2": "O2 max (%)", "cell_pressure": "Pressure (psi)", "cell_data": "Data table in PSI"}),
+                     "cell_o2": "Ambient O2 max (%)", "cell_pressure": "Pressure (psi)",
+                     "cell_data": "Data table in PSI"}),
             hide_index=True, width="stretch")
     else:
         st.caption("No investigation matches the filters.")

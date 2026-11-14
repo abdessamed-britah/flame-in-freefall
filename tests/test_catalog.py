@@ -58,6 +58,21 @@ def test_all_weights_zero_gives_zero_scores(df):
     assert (ranked(df, dict.fromkeys(cat.CRITERIA, 0))["score"] == 0).all()
 
 
+def test_tied_ranks_are_marked_and_ordered_by_acronym(df):
+    df = df.assign(acronym=["ZED", "", "ALPHA"])
+    r = cat.rank(df, dict.fromkeys(cat.CRITERIA, 0), "suppression", 30, 10.2, "at_or_below")
+    assert list(r["rank"]) == ["=1", "=1", "=1"]
+    assert list(r["acronym"]) == ["ALPHA", "ZED", ""]       # alphabetical, no acronym last
+    assert list(ranked(df)["rank"]) == ["1", "2", "3"]      # no ties -> plain ranks
+
+
+def test_oxidizer_stream_o2_is_shown_but_scores_zero(df):
+    df = df.assign(o2_stream_max_pct=[float("nan"), float("nan"), 85.0])
+    r = ranked(df)
+    assert r.loc["FIXTURE-C", "points_o2"] == 0
+    assert "oxidizer-stream" in r.loc["FIXTURE-C", "cell_o2"] and "85" in r.loc["FIXTURE-C", "cell_o2"]
+
+
 def test_iss_pressure_rule_needs_the_range_to_contain_the_target(df):
     r = ranked(df, habitat=cat.HABITATS["ISS"])
     assert r.loc["FIXTURE-A", "points_pressure"] > 0   # 8.0 to 14.7 contains 14.7

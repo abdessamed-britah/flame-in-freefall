@@ -1,6 +1,6 @@
 psi_id,acronym,name,fire_safety_pillar,fire_safety_pillar_basis,fuel_phase,fuel_phase_basis
 PSI-10,ACME/Flame Design,Advanced Combustion via Microgravity Experiments / Flame Design,,,gas,challenge brief
-PSI-20,ACME BRE,Advanced Combustion via Microgravity Experiments - Burning Rate Emulator,,,gas,challenge brief
+PSI-20,ACME BRE,Advanced Combustion via Microgravity Experiments - Burning Rate Emulator,prevention,challenge brief: prevention depends on material selection and flammability limits,gas,challenge brief
 PSI-21,ACME CLD Flame,Advanced Combustion via Microgravity Experiments / Coflow Laminar Diffusion Flame,,,gas,challenge brief
 PSI-22,ACME E-FIELD Flames,Advanced Combustion via Microgravity Experiments Electric-Field Effects on Laminar Diffusion Flames,,,gas,challenge brief
 PSI-23,ACME s-Flame,Advanced Combustion via Microgravity Experiments-Structure and Response of Spherical Diffusion Flames,,,gas,challenge brief

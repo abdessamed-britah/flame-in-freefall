@@ -1,10 +1,5 @@
 psi_id,file,column,quantity,status,reason,would_give_min,would_give_max
-PSI-10,PSI-10_Experimental table_Flame Design_Inverse Flame.csv,XO2,o2,needs confirmation,header is the symbol XO2; it does not state the unit,21.2,85.0
-PSI-10,PSI-10_Experimental table_Flame Design_Normal Flame.csv,XO2 (init),o2,needs confirmation,header is the symbol XO2; it does not state the unit,19.8,40.0
 PSI-23,PSI-23_Experimental table_ACME s-Flame.csv,Atmosphere*,o2,not used,header does not state the unit,,
 PSI-39,PSI-39_Experimental table_CFI.csv,Pressure,pressure,not used,header does not state the unit,,
 PSI-39,PSI-39_Experimental table_CFI.csv,Oxygen,o2,not used,header does not state the unit,,
-PSI-69,PSI-69_Experimental table_FLEX.csv,O initial ambient composition; mole fraction,o2,needs confirmation,"header says ""O"", not O2 (lost subscript; unconfirmed)",12.0,34.0
 PSI-100,PSI-100_Experimental table_SAFFIRE-3.csv,Air Flow,flow,not used,header does not state the unit,,
-PSI-159,PSI-159_Experimental table_CFI-G_Inverse Flames.csv,XO2,o2,needs confirmation,header is the symbol XO2; it does not state the unit,12.0,85.0
-PSI-159,PSI-159_Experimental table_CFI-G_Normal Flames.csv,XO2 before test,o2,needs confirmation,header is the symbol XO2; it does not state the unit,17.97,39.97

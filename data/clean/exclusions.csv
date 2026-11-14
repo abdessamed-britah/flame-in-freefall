@@ -1,0 +1,104 @@
+test_number,flex_identifier,target,reason
+9,30CAL07,burning_rate_k,initial diameter missing (input feature d0_mm)
+12,264F003,burning_rate_k,burning rate missing
+14,256F007,burning_rate_k,burning rate missing
+15,256F008,burning_rate_k,burning rate missing
+17,240R003,burning_rate_k,burning rate missing
+24,196F003,burning_rate_k,initial diameter missing (input feature d0_mm)
+53,209F002,burning_rate_k,initial diameter missing (input feature d0_mm)
+80,207F001,burning_rate_k,initial diameter missing (input feature d0_mm)
+81,207F002,burning_rate_k,initial diameter missing (input feature d0_mm)
+83,304F002,burning_rate_k,initial diameter missing (input feature d0_mm)
+96,C08H301,burning_rate_k,initial diameter missing (input feature d0_mm)
+114,C11M201,burning_rate_k,"pressure printed as 0 in the raw file, so pressure_atm is missing (team ruling 2026-11-14)"
+138,C21H304,burning_rate_k,initial diameter missing (input feature d0_mm)
+210,N02H201,burning_rate_k,initial diameter missing (input feature d0_mm)
+223,H01M104,burning_rate_k,initial diameter missing (input feature d0_mm)
+237,H04H302,burning_rate_k,initial diameter missing (input feature d0_mm)
+242,H05M202,burning_rate_k,initial diameter missing (input feature d0_mm)
+4,30CAL02,d_ext_over_d0,extinction diameter missing
+7,20CAL13,d_ext_over_d0,extinction diameter missing
+8,30CAL06,d_ext_over_d0,extinction diameter missing
+9,30CAL07,d_ext_over_d0,initial diameter missing (input feature d0_mm)
+10,256F002,d_ext_over_d0,extinction diameter missing
+11,256R001,d_ext_over_d0,extinction diameter missing
+12,264F003,d_ext_over_d0,extinction diameter missing
+13,256R002,d_ext_over_d0,extinction diameter missing
+14,256F007,d_ext_over_d0,extinction diameter missing
+15,256F008,d_ext_over_d0,extinction diameter missing
+17,240R003,d_ext_over_d0,extinction diameter missing
+19,196F001,d_ext_over_d0,extinction diameter missing
+22,192F003,d_ext_over_d0,extinction diameter missing
+23,196F002,d_ext_over_d0,extinction diameter missing
+24,196F003,d_ext_over_d0,initial diameter missing (input feature d0_mm)
+27,195F001,d_ext_over_d0,extinction diameter missing
+28,195F002,d_ext_over_d0,extinction diameter missing
+29,178R001,d_ext_over_d0,extinction diameter missing
+31,182F001,d_ext_over_d0,extinction diameter missing
+32,182F002,d_ext_over_d0,extinction diameter missing
+37,220R001,d_ext_over_d0,extinction diameter missing
+38,220R002,d_ext_over_d0,extinction diameter missing
+39,224F001,d_ext_over_d0,"extinction diameter printed as 0, not confirmed to be a measured diameter"
+40,219R001,d_ext_over_d0,extinction diameter missing
+41,219F001,d_ext_over_d0,extinction diameter missing
+42,223F001,d_ext_over_d0,extinction diameter missing
+43,223F002,d_ext_over_d0,"extinction diameter printed as 0, not confirmed to be a measured diameter"
+44,206F001,d_ext_over_d0,extinction diameter missing
+47,209F001,d_ext_over_d0,extinction diameter missing
+48,205F001,d_ext_over_d0,extinction diameter missing
+51,209F005,d_ext_over_d0,"extinction diameter printed as 0, not confirmed to be a measured diameter"
+52,210F002,d_ext_over_d0,"extinction diameter printed as 0, not confirmed to be a measured diameter"
+53,209F002,d_ext_over_d0,initial diameter missing (input feature d0_mm)
+54,190F003,d_ext_over_d0,extinction diameter missing
+58,176F001,d_ext_over_d0,extinction diameter missing
+60,204F001,d_ext_over_d0,extinction diameter missing
+63,301F002,d_ext_over_d0,"extinction diameter printed as 0, not confirmed to be a measured diameter"
+65,189R001,d_ext_over_d0,extinction diameter missing
+69,193R002,d_ext_over_d0,"extinction diameter printed as 0, not confirmed to be a measured diameter"
+71,189R002,d_ext_over_d0,extinction diameter missing
+72,193R001,d_ext_over_d0,extinction diameter missing
+74,221F001,d_ext_over_d0,extinction diameter missing
+80,207F001,d_ext_over_d0,initial diameter missing (input feature d0_mm)
+81,207F002,d_ext_over_d0,initial diameter missing (input feature d0_mm)
+83,304F002,d_ext_over_d0,initial diameter missing (input feature d0_mm)
+88,053R001,d_ext_over_d0,extinction diameter missing
+89,053F001,d_ext_over_d0,extinction diameter missing
+90,141R001,d_ext_over_d0,extinction diameter missing
+91,141F001,d_ext_over_d0,extinction diameter missing
+92,061F002,d_ext_over_d0,extinction diameter missing
+93,149F001,d_ext_over_d0,"extinction diameter printed as 0, not confirmed to be a measured diameter"
+96,C08H301,d_ext_over_d0,initial diameter missing (input feature d0_mm)
+107,C08M401,d_ext_over_d0,extinction diameter missing
+108,C09M301,d_ext_over_d0,extinction diameter missing
+114,C11M201,d_ext_over_d0,"pressure printed as 0 in the raw file, so pressure_atm is missing (team ruling 2026-11-14)"
+128,C13M401,d_ext_over_d0,extinction diameter missing
+135,C21H501,d_ext_over_d0,"extinction diameter printed as 0, not confirmed to be a measured diameter"
+136,C21H302,d_ext_over_d0,extinction diameter missing
+137,C21H303,d_ext_over_d0,extinction diameter missing
+138,C21H304,d_ext_over_d0,initial diameter missing (input feature d0_mm)
+139,C21H305,d_ext_over_d0,extinction diameter missing
+151,C03M101,d_ext_over_d0,extinction diameter missing
+175,C08H601,d_ext_over_d0,extinction diameter missing
+176,C08M501,d_ext_over_d0,extinction diameter missing
+183,C09M501,d_ext_over_d0,extinction diameter missing
+184,C09M502,d_ext_over_d0,extinction diameter missing
+192,C04M101,d_ext_over_d0,extinction diameter missing
+204,N01H101,d_ext_over_d0,extinction diameter missing
+205,N01H102,d_ext_over_d0,extinction diameter missing
+208,N01H301,d_ext_over_d0,extinction diameter missing
+210,N02H201,d_ext_over_d0,initial diameter missing (input feature d0_mm)
+214,N04H201,d_ext_over_d0,extinction diameter missing
+215,N04M101,d_ext_over_d0,extinction diameter missing
+223,H01M104,d_ext_over_d0,initial diameter missing (input feature d0_mm)
+224,H01H102,d_ext_over_d0,extinction diameter missing
+225,H02M101,d_ext_over_d0,extinction diameter missing
+229,N01H502,d_ext_over_d0,extinction diameter missing
+231,H02H101,d_ext_over_d0,extinction diameter missing
+233,H03H201,d_ext_over_d0,extinction diameter missing
+234,H03H202,d_ext_over_d0,extinction diameter missing
+237,H04H302,d_ext_over_d0,initial diameter missing (input feature d0_mm)
+238,H04H303,d_ext_over_d0,extinction diameter missing
+239,H04M101,d_ext_over_d0,extinction diameter missing
+242,H05M202,d_ext_over_d0,initial diameter missing (input feature d0_mm)
+254,H11M102,d_ext_over_d0,extinction diameter missing
+255,H12M101,d_ext_over_d0,extinction diameter missing

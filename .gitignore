@@ -1,0 +1,27 @@
+# Secrets and API keys
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*api_key*
+*apikey*
+*api-key*
+secrets.*
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Editor
+.vscode/
+
+# Size limit: git cannot ignore files by size. Nothing in this repo is near
+# 50 MB today (largest file is under 1 MB). Before adding a model or data file
+# larger than 50 MB, list it here by name instead of committing it.
+# models/<big-model>.joblib
+
+# Stray copy of the raw file in the project root. The tracked copy is
+# data/raw/PSI-69_Experimental table_FLEX.csv.
+/PSI-69_Experimental table_FLEX.csv

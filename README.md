@@ -176,9 +176,11 @@ to its source cell, and the FLEX rows are compared with `flex_clean.csv`).
   "mm" and the gases as "O", "N", "CO". The team reads "O" as O2 because the
   four gas fractions sum to 1 in every row (0.98 to 1.01, rounding); the
   burning-rate unit is still unconfirmed.
-- **O2 and suppressant vary together.** In FLEX the suppressant replaces part of
-  a fixed O2/N2 mix at constant pressure, so the data cannot separate "less
-  oxygen" from "more suppressant" within one pressure group.
+- **More diluent also means less oxygen.** In FLEX the suppressant replaces part
+  of a fixed O2/N2 mix at constant pressure. Adding diluent at a fixed O2/N2
+  balance therefore also lowers O2 (40% CO2 brings 30% O2 down to 18%:
+  0.30 x (1 - 0.40)), so the data cannot separate the diluent's effect from the
+  lower oxygen. The Suppression Lab shows this caveat under its chart.
 - **"Visible flame extinction" may not be the end of burning**: FLEX found
   heptane droplets can keep burning in an invisible cool flame.
 - **No partial-gravity data in PSI.** All 24 records are labelled by PSI as
@@ -202,8 +204,8 @@ to its source cell, and the FLEX rows are compared with `flex_clean.csv`).
 
 ## How AI is used, and how its output is checked
 
-The app calls Claude (`claude-haiku-5-5`, Anthropic API) for two things. All AI
-text is labelled as AI-generated.
+The app calls Google Gemini (`gemini-3.5-flash`, through the `google-genai`
+SDK) for two things. All AI text is labelled as AI-generated.
 
 | Feature | What the model receives | Check before display |
 |---|---|---|
@@ -230,12 +232,18 @@ pip install -r requirements.txt
 streamlit run app/Home.py
 ```
 
-Optional, to switch the AI features on (the key is read from the environment and
-never stored in the repository):
+Optional, to switch the AI features on, put the key in
+`.streamlit/secrets.toml` (git-ignored, never stored in the repository):
 
 ```
-set ANTHROPIC_API_KEY=...        (Windows)
-export ANTHROPIC_API_KEY=...     (macOS, Linux)
+GEMINI_API_KEY = "..."
+```
+
+or set it in the environment (the app reads the secrets file first):
+
+```
+set GEMINI_API_KEY=...        (Windows)
+export GEMINI_API_KEY=...     (macOS, Linux)
 ```
 
 To rebuild everything from NASA's files and run the tests:
@@ -255,7 +263,7 @@ python -m pytest tests -q
 ## Deploy (Streamlit Community Cloud)
 
 Repository `abdessamed-britah/flame-in-freefall`, branch `main`, main file
-`app/Home.py`, Python 3.11. Add `ANTHROPIC_API_KEY = "..."` under the app's
+`app/Home.py`, Python 3.11. Add `GEMINI_API_KEY = "..."` under the app's
 Secrets to switch the AI features on. `requirements.txt` pins the versions the
 saved models were trained with.
 

@@ -7,5 +7,5 @@ scipy==1.17.1
 scikit-learn==1.9.1
 joblib==1.6.0
 plotly==7.1.0
-# AI layer (optional at run time: without ANTHROPIC_API_KEY the app shows template summaries)
-anthropic==2.8.0
+# AI layer (optional at run time: without GEMINI_API_KEY the app shows template summaries)
+google-genai==3.3.0

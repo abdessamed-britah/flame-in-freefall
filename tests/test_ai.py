@@ -17,7 +17,9 @@ def df():
 
 @pytest.fixture(autouse=True)
 def no_key(monkeypatch):
+    # no key from the environment or from a local .streamlit/secrets.toml: tests never call the service
     monkeypatch.delenv(ai.KEY_ENV, raising=False)
+    monkeypatch.setattr(ai, "get_key", lambda: "")
 
 
 def fake(reply):

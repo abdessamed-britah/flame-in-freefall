@@ -102,6 +102,9 @@ st.caption(f"Points are the {n_ratio} NASA tests of this slice that have an exti
            f"{d_hi:.2f} mm, while the line is for {d0_mm:.2f} mm. Hover a point for its test number. "
            "The ratio cannot exceed 1 (the flame cannot go out at a diameter larger than the droplet started "
            "with), so the model line and band are cut off at 1.")
+st.warning(f"**Caveat: more {suppressant} also means less oxygen.** Adding diluent at a fixed O2/N2 balance lowers "
+           f"O2 as well: 40% {suppressant} brings {o2_base:.0%} O2 down to {o2_base * 0.6:.0%} "
+           f"({o2_base:.2f} x (1 - 0.40)). The data cannot separate the diluent's effect from the lower oxygen.")
 sentence = lab.crossing_sentence(ratio_curve, threshold, fuel, suppressant, d0_mm)
 st.info(sentence)
 st.caption("\"At least\" is where the top of the 90% band reaches the threshold; the best estimate is where "

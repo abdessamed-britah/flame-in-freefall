@@ -1,7 +1,7 @@
-"""AI layer: catalog Q&A and "explain this result". Provider: Anthropic (Claude).
+"""AI layer: catalog Q&A and "explain this result". Provider: Google Gemini (google-genai SDK).
 
-The key is read from the ANTHROPIC_API_KEY environment variable and is never
-stored in the repository. With no key, or if the call fails, or if the model's
+The key is read from GEMINI_API_KEY, first in Streamlit secrets, then in the
+environment, and is never stored in the repository. With no key, or if the call fails, or if the model's
 text fails its check, both features return a plain template built from the
 data, so the app always works.
 
@@ -21,11 +21,14 @@ import pandas as pd
 
 import catalog as cat
 
-MODEL = "claude-haiku-5-5"  # cheap and fast; team choice
-KEY_ENV = "ANTHROPIC_API_KEY"
+# Flash model listed by the API for our key and answering on 2026-11-14
+# (gemini-3.6/3.7/3.8-flash returned 503 "high demand" that day).
+MODEL = "gemini-3.5-flash"
+TIMEOUT_MS = 90_000  # the service was slow on 2026-11-14: one catalog answer took 51 s
+KEY_ENV = "GEMINI_API_KEY"
 NOT_IN_CATALOG = "NOT_IN_CATALOG"
 NOT_IN_CATALOG_REPLY = "The catalog does not contain the answer to this question."
-AI_LABEL = "AI-generated text (Claude). Checked automatically against the data shown on this page; may still be wrong."
+AI_LABEL = "AI-generated text (Gemini). Checked automatically against the data shown on this page; may still be wrong."
 TEMPLATE_LABEL = "Template summary built from the data, not AI-generated."
 
 LLM = Callable[[str, str], str]  # (system prompt, user message) -> reply text
@@ -35,36 +38,46 @@ class AIUnavailable(Exception):
     pass
 
 
+def get_key() -> str:
+    """The key from Streamlit secrets (.streamlit/secrets.toml or the deployed app's Secrets), else the environment."""
+    value = ""
+    try:
+        import streamlit as st
+        value = str(st.secrets.get(KEY_ENV, ""))
+    except Exception:  # no secrets file, or streamlit not installed
+        value = ""
+    return (value or os.environ.get(KEY_ENV, "")).strip()
+
+
 def has_key() -> bool:
-    return bool(os.environ.get(KEY_ENV, "").strip())
+    return bool(get_key())
 
 
-def call_claude(system: str, user: str) -> str:
-    """One request to Claude. Raises AIUnavailable on any failure or refusal."""
+def call_gemini(system: str, user: str) -> str:
+    """One request to Gemini. Raises AIUnavailable on any failure or block."""
     try:
-        import anthropic
+        from google import genai
+        from google.genai import errors, types
     except ImportError as e:  # app still works without the package
-        raise AIUnavailable("the anthropic package is not installed") from e
+        raise AIUnavailable("the google-genai package is not installed") from e
     try:
-        client = anthropic.Anthropic()
-        resp = client.messages.create(
+        client = genai.Client(api_key=get_key(), http_options=types.HttpOptions(timeout=TIMEOUT_MS))
+        resp = client.models.generate_content(
             model=MODEL,
-            max_tokens=16000,
-            output_config={"effort": "medium"},
-            system=system,
-            messages=[{"role": "user", "content": user}],
+            contents=user,
+            # low thinking: at the default level the catalog question took over 60 s
+            config=types.GenerateContentConfig(system_instruction=system, temperature=0, max_output_tokens=8000,
+                                               thinking_config=types.ThinkingConfig(thinking_level="low")),
         )
-    except anthropic.APIConnectionError as e:
+    except errors.APIError as e:
+        if e.code in (400, 401, 403):
+            raise AIUnavailable(f"the API key or request was rejected ({e.code} {e.status})") from e
+        if e.code == 429:
+            raise AIUnavailable("the AI service is rate-limiting requests (429)") from e
+        raise AIUnavailable(f"the AI service returned an error ({e.code})") from e
+    except Exception as e:  # network failure
         raise AIUnavailable("could not reach the AI service") from e
-    except anthropic.AuthenticationError as e:
-        raise AIUnavailable("the API key was rejected") from e
-    except anthropic.RateLimitError as e:
-        raise AIUnavailable("the AI service is rate-limiting requests") from e
-    except anthropic.APIStatusError as e:
-        raise AIUnavailable(f"the AI service returned an error ({e.status_code})") from e
-    if resp.stop_reason == "refusal":
-        raise AIUnavailable("the AI service declined the request")
-    text = "".join(b.text for b in resp.content if b.type == "text").strip()
+    text = (resp.text or "").strip()
     if not text:
         raise AIUnavailable("the AI service returned no text")
     return text
@@ -80,7 +93,7 @@ def _run(llm: LLM | None, system: str, user: str) -> tuple[str | None, str]:
     if llm is None:
         if not has_key():
             return None, f"No AI key is set ({KEY_ENV})."
-        llm = call_claude
+        llm = call_gemini
     try:
         return llm(system, user), ""
     except AIUnavailable as e:

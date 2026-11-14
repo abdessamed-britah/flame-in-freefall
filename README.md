@@ -17,6 +17,9 @@ combustion investigations.
 
 ## What the dashboard does
 
+Four pages: **Home** (purpose, data sources, limits), **Catalog**,
+**Suppression Lab** and **Unified Data**.
+
 **Investigation Catalog.** The 24 investigations that NASA's Physical Sciences
 Informatics (PSI) system lists under Combustion Science, built from NASA's own
 records. Filter them (fire-safety pillar, fuel phase, hardware, O2 range),
@@ -37,6 +40,16 @@ suppressant (CO2 or He), and see:
 4. the five nearest real NASA tests as evidence;
 5. how far to trust the model, including its failure on a suppressant it has
    never seen.
+
+**Unified data.** The test conditions of all 22 experimental tables that PSI
+offers for these investigations, centralised in one file with the same units
+for every investigation (mole fraction, kPa, cm/s, mm): 2,009 rows. Filter
+across investigations, plot any condition against any other, download the CSV,
+and see where the Moon Base atmosphere (O2 0.30 at 70.3 kPa) sits among NASA's
+tests. A value is converted only when the source column states its unit;
+`data/unified/units_map.csv` lists every source column, its original unit and
+the conversion applied. Measurements stay in NASA's original tables, linked by
+PSI id, file and row.
 
 **AI layer.** Ask the catalog a question, or ask for a short explanation of a
 Suppression Lab result. Both are checked before display (see below) and both
@@ -81,6 +94,41 @@ Column meanings and units of the FLEX table are documented in
 [NASA/TP-2015-216046](https://ntrs.nasa.gov/citations/20150023456) (Table IX
 and Appendix A.1); the team has not yet confirmed them against that report.
 
+## Unified schema and units map
+
+`src/normalize.py` reads the 22 experimental tables in `data/raw/psi/tables/`
+and writes `data/unified/tests_conditions.csv`, one row per source-table row
+(2,009 rows), with the same columns and units for every investigation:
+
+| Column | Meaning | Unit |
+|---|---|---|
+| `psi_id`, `investigation` | PSI id and name | |
+| `test_id` | test identifier as printed in the source table | |
+| `source_file`, `source_row` | the NASA table and row the values come from (always unique) | |
+| `fuel` | as printed in the source table | |
+| `fuel_phase` | solid, liquid or gas (team label, from `curated_labels.csv`) | |
+| `gravity` | blank in every row: no table states it per row | |
+| `o2_mole_frac` | O2 | mole fraction |
+| `o2_basis` | "ambient" or "oxidizer stream" (gas fed through the burner) | |
+| `pressure_kpa` | pressure | kPa |
+| `flow_speed_cm_s` | air or inlet flow speed | cm/s |
+| `diluent`, `diluent_mole_frac` | added CO2 or He (FLEX only) | mole fraction |
+| `sample_size_mm` | droplet diameter, burner size or nozzle diameter; the units map says which | mm |
+| `quality_flag` | approximate values, cells with several values, rows that are not one test | |
+
+`data/unified/units_map.csv` has one row per source column (81 rows): original
+header, original unit, conversion, factor, target column and status.
+
+| Status | Columns | Meaning |
+|---|---|---|
+| converted | 10 | atm x 101.325, bar x 100, mmHg x 101.325/760 to kPa; percent x 0.01 to mole fraction |
+| copied | 61 | already in the target unit, or text (test id, fuel) |
+| unit not stated | 8 | header gives no unit; not used, cell left blank |
+| not mapped | 2 | unit stated but no matching target column |
+
+A value is converted only when the column header or the PSI record states the
+unit. Units written inside the cells are not read.
+
 ## Validation
 
 Two Gaussian-process models, one per target, trained on the FLEX table. Inputs:
@@ -110,8 +158,9 @@ extrapolates to a new suppressant, and `predict()` reports `in_range = False`
 outside the tested conditions.
 
 The raw FLEX file is audited by `src/audit.py` (45 checks, `reports/audit.md`),
-and 53 automated tests cover the prediction range checks, the catalog scoring
-and the two AI checks.
+and 60 automated tests cover the prediction range checks, the catalog scoring,
+the two AI checks and the unified table (every converted value is traced back
+to its source cell, and the FLEX rows are compared with `flex_clean.csv`).
 
 ## Limitations
 
@@ -135,8 +184,18 @@ and the two AI checks.
 - **No partial-gravity data in PSI.** All 24 records are labelled by PSI as
   either Microgravity Investigation (19) or Ground Investigation (5).
 - **The NASA table does not separate space tests from ground tests.**
+- **Many tables do not state their units.** In the unified table, O2 is filled
+  for 1,060 of 2,009 rows and pressure for 933; the rest are blank because the
+  source column gives no unit, holds several values in one cell, or does not
+  exist. No table says per row whether a test ran in microgravity or normal
+  gravity, so that column is blank throughout.
+- **Known gap: CFI and SAFFIRE-III.** CFI (PSI-39, 87 rows) prints its pressure
+  as "1 atm" and its O2, N2 and He as bare numbers under headers with no unit;
+  SAFFIRE-III (PSI-100) prints "30 cm/s" and ".33 cm" the same way. Units
+  written in the cells are not read, so these conditions are blank in the
+  unified table and the catalog. The values are in NASA's original tables.
 - **Catalog gaps are shown, not filled.** A cell with no source is blank and
-  scores zero. O2, pressure and flow ranges are computed only from table columns
+  scores zero. O2 (mole fraction), pressure (kPa) and flow ranges are computed only from table columns
   whose header states the quantity and unit. For ACME Flame Design and CFI-G the
   O2 values are those of the oxidizer stream, not the ambient atmosphere, so
   they are displayed but do not count towards the habitat O2 criterion.
@@ -155,7 +214,12 @@ A rejected answer, a failed call, or a missing key all lead to the same place:
 a plain template summary built from the data, labelled as not AI-generated. The
 relevance ranking and the predictions never use AI.
 
-AI assistance was also used to write the code (Claude Code).
+### AI tools used to build the project
+
+Claude Code (Anthropic) was used to write the code, the tests and this README
+under the team's direction. The team set the rules (never fill a missing value,
+never guess a unit), made the rulings on ambiguous columns, and reviewed each
+step. No AI generated or altered any NASA data value.
 
 ## Run it locally
 
@@ -184,6 +248,7 @@ python src/eda.py             # reports/eda.md, reports/figures/
 python src/model.py           # reports/validation.md, validation.json, models/
 python src/fetch_psi.py       # data/raw/psi/ (skips files already saved)
 python src/build_catalog.py   # data/catalog/investigations.csv
+python src/normalize.py       # data/unified/tests_conditions.csv, units_map.csv
 python -m pytest tests -q
 ```
 
@@ -201,12 +266,13 @@ data/raw/      NASA FLEX table, untouched
 data/raw/psi/  PSI records, experimental tables and manifest.csv, untouched
 data/clean/    flex_clean.csv (274 rows), exclusions.csv (tests left out of modelling, per target)
 data/catalog/  investigations.csv, curated_labels.csv, columns_not_used.csv
+data/unified/  tests_conditions.csv (one row per source-table row), units_map.csv
 src/           audit.py, clean.py, eda.py, model.py, lab.py, catalog.py, ai.py,
-               fetch_psi.py, build_catalog.py
+               fetch_psi.py, build_catalog.py, normalize.py
 models/        saved models (joblib), one per target, written by src/model.py
-app/           Home.py, pages/1_Catalog.py, pages/2_Suppression_Lab.py
+app/           Home.py, pages/1_Catalog.py, pages/2_Suppression_Lab.py, pages/3_Unified_Data.py
 reports/       audit.md, eda.md, validation.md, validation.json, figures/
-tests/         test_predict.py, test_catalog.py, test_ai.py, fixtures/
+tests/         test_predict.py, test_catalog.py, test_ai.py, test_normalize.py, fixtures/
 ```
 
 - `models/` holds `burning_rate_k.joblib` and `d_ext_over_d0.joblib`. They load

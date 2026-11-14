@@ -47,6 +47,9 @@ with b:
                 "is to its extinction limit, with uncertainty and the nearest real NASA tests.")
     st.markdown("Open **Suppression Lab** in the sidebar.")
 
+st.markdown("**Unified data** brings the test conditions of every PSI experimental table into one file with "
+            "the same units, to filter, plot and download. Open **Unified Data** in the sidebar.")
+
 st.subheader("Data sources")
 st.markdown(
     f"- **NASA PSI-69, Flame Extinguishment Experiment (FLEX)**, experimental table, CC0: "

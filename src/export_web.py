@@ -15,8 +15,13 @@ page) when the user moves a weight slider. Everything else comes from these file
   web/public/data/validation.json  the Suppression Lab's validation tables
   web/public/data/rag_saved.json   the saved, checked answers with every retrieved passage verbatim
   web/public/data/meta.json        counts, sources, DOIs, limits, export time, git commit
+  web/data/rag_index.json          SERVER-SIDE ONLY (not in public/): the passages, the fitted TF-IDF
+                                   vocabulary, idf and L2-normalised sparse passage vectors, the
+                                   tokeniser settings, the quotas, the prompt and check constants of
+                                   src/ai.py, and the Python top 6 for the 30 check questions (parity test)
 
-Run:  python src/export_web.py      (about 5 minutes: some 7,000 calls to predict())
+Run:  python src/export_web.py              everything (about 5 minutes: some 7,000 calls to predict())
+      python src/export_web.py rag_index    only web/data/rag_index.json
 """
 from __future__ import annotations
 
@@ -229,6 +234,38 @@ def export_rag() -> int:
     return len(by_id)
 
 
+def export_rag_index() -> None:
+    """Everything the Next.js route needs to retrieve and check exactly as src/retrieve.py and src/ai.py do."""
+    ix = retrieve.build_index()
+    v = ix.vectorizer
+    assert v.ngram_range == (1, 2) and v.lowercase and v.sublinear_tf and v.norm == "l2" and v.analyzer == "word"
+    m = ix.matrix.tocsr()
+    vocab = sorted(v.vocabulary_, key=v.vocabulary_.get)  # position = column index
+    vectors = [[m.indices[m.indptr[i]:m.indptr[i + 1]].tolist(), m.data[m.indptr[i]:m.indptr[i + 1]].tolist()]
+               for i in range(m.shape[0])]
+    questions = json.loads((ROOT / "tests" / "retrieval_questions.json").read_text(encoding="utf-8"))
+    out = {
+        "passages": [{"id": p["passage_id"], "text": p["text"], "source_type": p["source_type"],
+                      "source_label": retrieve.SOURCE_LABEL[p["source_type"]], "title": p["doc_title"],
+                      "section": p["section"], "url": p["source_url"], "psi_id": p["psi_id"], "psi_ids": p["psi_ids"],
+                      "field": p["field"]} for p in ix.passages],
+        "tokenizer": {"token_pattern": v.token_pattern, "lowercase": True, "ngram_range": [1, 2],
+                      "stop_words": sorted(v.get_stop_words()), "sublinear_tf": True, "norm": "l2"},
+        "vocabulary": vocab, "idf": v.idf_.tolist(), "vectors": vectors,
+        "top_k": retrieve.TOP_K, "quota": retrieve.QUOTA, "publication_field": retrieve.PUBLICATION,
+        "ai": {"model": ai.MODEL, "system": ai.RAG_SYSTEM, "not_in_passages": ai.NOT_IN_PASSAGES,
+               "not_in_passages_reply": ai.NOT_IN_PASSAGES_REPLY, "no_passages_reply": ai.NO_PASSAGES_REPLY,
+               "search_label": ai.SEARCH_LABEL, "ai_label": "AI-generated (Gemini), checked",
+               "support_threshold": ai.SUPPORT_THRESHOLD, "support_stop_words": sorted(ai._STOP)},
+        "parity": [{"question": q["question"], "ids": [p["passage_id"] for p in ix.search(q["question"])]}
+                   for q in questions],
+    }
+    path = ROOT / "web" / "data" / "rag_index.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    print(f"web/data/rag_index.json: {path.stat().st_size / 1024:.0f} kB, {len(vocab)} terms, {len(vectors)} passages")
+
+
 def export_meta(catalog: dict, n_unified: int, n_passages: int, grid: dict) -> None:
     flex = lab.load_clean()
     key = next(s for s in grid["slices"] if s["atm"] == "moon" and s["fuel"] == "Methanol" and s["dil"] == "CO2"
@@ -252,6 +289,9 @@ def export_meta(catalog: dict, n_unified: int, n_passages: int, grid: dict) -> N
 
 
 def main() -> None:
+    if sys.argv[1:] == ["rag_index"]:
+        export_rag_index()
+        return
     OUT.mkdir(parents=True, exist_ok=True)
     catalog = export_catalog()
     n_unified = export_unified()
@@ -259,6 +299,7 @@ def main() -> None:
     export_validation()
     n_passages = export_rag()
     export_meta(catalog, n_unified, n_passages, grid)
+    export_rag_index()
 
 
 if __name__ == "__main__":

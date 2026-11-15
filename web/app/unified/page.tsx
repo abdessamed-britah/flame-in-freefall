@@ -65,7 +65,7 @@ export default function UnifiedPage() {
         purpose={pick(audience, {
           researcher: "The test conditions of every PSI experimental table in one schema: mole fraction and kPa, converted only where the source states its unit.",
           engineer: "The test conditions of every NASA combustion investigation in one table, in the same units.",
-          student: "Where did NASA test fires? Each mark is one row of a NASA table, placed by its oxygen and pressure.",
+          plain: "Where did NASA test fires? Each mark is one row of a NASA table, placed by its oxygen and pressure.",
         })} />
       {err && <Caveat>Could not load the data: {err}</Caveat>}
       {!data ? <Loading what="2,009 rows" /> : (

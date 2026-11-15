@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AUDIENCES, useAudience, type Audience } from "@/lib/audience";
+import { AUDIENCES, useAudience, type AudienceId } from "@/lib/audience";
 
 const PAGES = [
   { href: "/", label: "Home" },
@@ -13,7 +13,7 @@ const PAGES = [
 
 export default function Nav() {
   const path = usePathname() || "/";
-  const { audience, setAudience } = useAudience();
+  const { audienceId, setAudienceId } = useAudience();
   return (
     <nav aria-label="Main" className="border-b border-line bg-[#0f1528]">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
@@ -33,7 +33,7 @@ export default function Nav() {
         </ul>
         <label className="ml-auto flex items-center gap-2 text-sm text-muted">
           View for
-          <select value={audience} onChange={(e) => setAudience(e.target.value as Audience)}
+          <select value={audienceId} onChange={(e) => setAudienceId(e.target.value as AudienceId)}
             className="rounded-md border border-line bg-panel px-2 py-1 text-ink">
             {AUDIENCES.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
           </select>

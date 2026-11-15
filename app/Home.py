@@ -16,6 +16,7 @@ import retrieve  # noqa: E402
 import theme  # noqa: E402
 
 UNIFIED = ROOT / "data" / "unified" / "tests_conditions.csv"
+LIVE_URL = "https://flame-in-freefall-1.streamlit.app/"
 KEY = {"preset": "Moon Base (30% O2, ~535 mmHg)", "fuel": "Methanol", "suppressant": "CO2"}  # the key-finding case
 
 st.set_page_config(page_title="Flame in Freefall", page_icon=":material/local_fire_department:", layout="wide")
@@ -102,6 +103,8 @@ def landing() -> None:
             "**Limitations**\n" + "\n".join(f"- {t}" for t in lab.LIMITS) + "\n\n"
             "Every number in this app is computed from NASA's tables or from the model trained on them; see "
             "reports/audit.md and reports/validation.md in the repository.")
+    st.caption(f"Live app: [{LIVE_URL.removeprefix('https://').rstrip('/')}]({LIVE_URL}) · "
+               "Data: NASA Physical Sciences Informatics (PSI), CC0. AI text is always labelled.")
 
 
 PAGES = {

@@ -157,7 +157,7 @@ export default function LabPage() {
         purpose={<>{pick(audience, {
           researcher: "Gaussian-process predictions of extinction ratio and burning rate against suppressant fraction, from NASA's FLEX tests",
           engineer: "How much CO2 or He pushes a burning fuel droplet to its extinction limit, from NASA's FLEX tests",
-          student: "Add CO2 or helium to the air and see how soon a burning droplet goes out, using NASA's FLEX tests",
+          plain: "Add CO2 or helium to the air and see how soon a burning droplet goes out, using NASA's FLEX tests",
         })} (<a href="https://doi.org/10.60555/mbq8-0451">PSI-69</a>).</>} />
       <Caveat>Single fuel droplets, not cabin materials: this supports fire-safety reasoning, it does not predict a cabin fire.</Caveat>
 
@@ -199,7 +199,7 @@ export default function LabPage() {
           40% {dil} brings {pct(s.o2_base)} O2 down to {pct(s.o2_base * 0.6)} ({s.o2_base.toFixed(2)} x (1 - 0.40)). The data
           cannot separate the diluent&apos;s effect from the lower oxygen.
         </Caveat>
-        <Panel title="How to read this chart" open={audience === "student"} key={`read-${audience}`}>
+        <Panel title="How to read this chart" open={audience === "plain"} key={`read-${audience}`}>
           <ul className="ml-5 list-disc space-y-1 text-sm">
             <li>d_ext / d0 is the droplet size when the flame went out, divided by its size at ignition. Near 1: the flame
               went out almost at once (close to the limit). Small: most of the droplet burned.</li>
@@ -226,7 +226,7 @@ export default function LabPage() {
       </Section>
 
       <Section title="3. Evidence: the 5 nearest NASA tests">
-        <Panel title={`Nearest tests to ${fuel.toLowerCase()}, ${dil} ${x.toFixed(3)}, d0 ${s.d0.toFixed(2)} mm`} open={audience !== "student"} key={`ev-${audience}`}>
+        <Panel title={`Nearest tests to ${fuel.toLowerCase()}, ${dil} ${x.toFixed(3)}, d0 ${s.d0.toFixed(2)} mm`} open={audience !== "plain"} key={`ev-${audience}`}>
           <TableWrap>
             <table className="w-full text-sm">
               <thead><tr>{["Test", "Identifier", "Date", "Pressure (mmHg)", "O2 (mole fraction)", "CO2 (mole fraction)",

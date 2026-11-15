@@ -85,7 +85,7 @@ export default function AskPage() {
         purpose={pick(audience, {
           researcher: "Answers grounded in retrieved passages of NASA text, each claim cited and checked against the retrieval.",
           engineer: "Answers that cite NASA's own text, passage by passage.",
-          student: "Questions about spacecraft fires, answered only from NASA's own words, with the words shown.",
+          plain: "Questions about spacecraft fires, answered only from NASA's own words, with the words shown.",
         })} />
 
       <div className="flex flex-wrap items-center gap-3">

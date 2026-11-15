@@ -11,5 +11,5 @@ npm install
 npm run build                    # static export to out/
 ```
 
-Deployed on Vercel with Root Directory `web`. Set `NEXT_PUBLIC_STREAMLIT_URL` to the Streamlit
-app's address so "Ask a new question" opens it.
+Deployed on Vercel with Root Directory `web`. "Ask a new question" opens the Streamlit app,
+<https://flame-in-freefall-1.streamlit.app/> (override with `NEXT_PUBLIC_STREAMLIT_URL`).

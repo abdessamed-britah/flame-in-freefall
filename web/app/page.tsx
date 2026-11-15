@@ -25,7 +25,7 @@ export default function Home() {
         {pick(audience, {
           researcher: "A Moon Base will likely run on 30% O2 or more at 527 mmHg or less. This dashboard summarises what NASA's microgravity combustion investigations measured in and near that atmosphere.",
           engineer: "A Moon Base will run on more oxygen at lower pressure than Earth: this is what NASA's microgravity combustion tests say about putting a fire out there.",
-          student: "A Moon Base will have more oxygen and less pressure than the air on Earth. Here is what NASA's experiments in space say about how fires burn and go out there.",
+          plain: "A Moon Base will have more oxygen and less pressure than the air on Earth. Here is what NASA's experiments in space say about how fires burn and go out there.",
         })}
       </p>
 

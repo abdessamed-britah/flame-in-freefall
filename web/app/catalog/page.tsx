@@ -55,7 +55,7 @@ export default function CatalogPage() {
         purpose={pick(audience, {
           researcher: "Rank NASA's 24 combustion investigations by a transparent weighted score, and check every cell behind it.",
           engineer: "Rank, filter and compare NASA's combustion investigations by relevance to a habitat.",
-          student: "Which NASA fire experiments matter most for a Moon Base? Change the weights and see the order change.",
+          plain: "Which NASA fire experiments matter most for a Moon Base? Change the weights and see the order change.",
         })} />
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -68,7 +68,7 @@ export default function CatalogPage() {
       </div>
       <p className="mt-2 text-sm text-muted">{h.note} Target: O2 {h.o2_frac} (mole fraction) at {h.pressure_kpa} kPa.</p>
 
-      <Panel title="Weights (0 to 10)" open={audience !== "student"}>
+      <Panel title="Weights (0 to 10)" open={audience !== "plain"}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {CRITS.map((k) => (
             <label key={k} className="flex flex-col gap-1 text-sm">

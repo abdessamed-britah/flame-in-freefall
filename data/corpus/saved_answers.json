@@ -14,29 +14,28 @@
       "PSI-69-pub-45"
     ],
     "model": "gemini-3.5-flash-lite",
-    "saved_utc": "2026-11-14 21:57"
+    "saved_utc": "2026-11-14 22:25"
   },
   {
     "question": "Why did NASA measure smoke particle sizes in low gravity?",
-    "text": "- To understand smoke particle sizes in low-gravity and their implications for spacecraft smoke detector design [PSI-102-pub-3].\n- To evaluate low-gravity smoke particulate for spacecraft fire detection [PSI-101-pub-2].",
+    "text": "- To quantify the sizes that liquid smoke particulate achieves in low gravity and relate the droplet size distribution to smoke generation and smoke transport conditions [PSI-102-objective-1].",
     "citations": [
-      "PSI-102-pub-3",
-      "PSI-101-pub-2"
+      "PSI-102-objective-1"
     ],
     "retrieved_ids": [
+      "PSI-98-objective-2",
+      "PSI-100-objective-2",
+      "PSI-99-objective-1",
+      "PSI-102-objective-1",
       "PSI-102-pub-3",
-      "PSI-102-pub-1",
-      "PSI-102-pub-12",
-      "PSI-101-pub-2",
-      "PSI-102-pub-4",
-      "PSI-102-pub-2"
+      "PSI-102-pub-1"
     ],
     "model": "gemini-3.5-flash-lite",
-    "saved_utc": "2026-11-14 21:57"
+    "saved_utc": "2026-11-14 22:25"
   },
   {
     "question": "How rapidly does a large-scale fire grow in low gravity?",
-    "text": "- One of the objectives of SAFFIRE-I is to determine how rapidly a large-scale fire grows in low-gravity [PSI-98-objective-2].\n- One of the objectives of SAFFIRE-III is to determine how rapidly a large-scale fire grows in low-gravity [PSI-100-objective-2].\n- An objective of SAFFIRE-II is to determine how rapidly a large-scale fire grows in low-gravity [PSI-99-objective-1].",
+    "text": "- The objectives of SAFFIRE-I, SAFFIRE-II, and SAFFIRE-III include determining how rapidly a large scale fire grows in low-gravity [PSI-98-objective-2, PSI-100-objective-2, PSI-99-objective-1].",
     "citations": [
       "PSI-98-objective-2",
       "PSI-100-objective-2",
@@ -46,35 +45,34 @@
       "PSI-98-objective-2",
       "PSI-100-objective-2",
       "PSI-99-objective-1",
+      "PSI-98-hypothesis-1",
       "PSI-102-pub-12",
-      "PSI-102-pub-1",
-      "PSI-101-pub-2"
+      "PSI-102-pub-1"
     ],
     "model": "gemini-3.5-flash-lite",
-    "saved_utc": "2026-11-14 21:57"
+    "saved_utc": "2026-11-14 22:25"
   },
   {
     "question": "Which experiment uses a gas burner to emulate the burning of solid and liquid fuels?",
-    "text": "- PSI-20 ACME BRE uses an emulating gas burner to study the ignition and extinction of small-scale fires and emulate condensed-phase burning [PSI-20-pub-2, PSI-20-pub-12].\n- PSI-20 ACME BRE employs a Burning Rate Emulator (BRE) involving liquid and gas fueled flames towards developing a burning rate emulator for microgravity applications [PSI-20-pub-3].",
+    "text": "- The ACME BRE experiment uses a gas burner to emulate condensed-phase burning of a real solid fuel or liquid fuel absorbed in an inert matrix [PSI-20-hypothesis-2, PSI-20-pub-2].",
     "citations": [
-      "PSI-20-pub-2",
-      "PSI-20-pub-12",
-      "PSI-20-pub-3"
+      "PSI-20-hypothesis-2",
+      "PSI-20-pub-2"
     ],
     "retrieved_ids": [
-      "PSI-20-pub-2",
-      "PSI-20-pub-12",
       "PSI-20-hypothesis-2",
-      "PSI-20-pub-3",
       "PSI-68-impacts-1",
-      "PSI-68-pub-38"
+      "PSI-69-objective-1",
+      "PSI-159-proposal-1",
+      "PSI-20-pub-2",
+      "PSI-20-pub-12"
     ],
     "model": "gemini-3.5-flash-lite",
-    "saved_utc": "2026-11-14 21:57"
+    "saved_utc": "2026-11-14 22:25"
   },
   {
     "question": "How do low-gravity flammability limits compare with NASA's normal-gravity material screening test?",
-    "text": "- Low-gravity flammability limits are investigated and compared to those obtained in NASA’s normal gravity material flammability screening test [PSI-100-objective-2, PSI-99-objective-1, PSI-98-objective-2].",
+    "text": "- SAFFIRE-I, SAFFIRE-II, and SAFFIRE-III investigate low-gravity flammability limits compared to those obtained in NASA’s normal gravity material flammability screening test [PSI-100-objective-2, PSI-99-objective-1, PSI-98-objective-2].",
     "citations": [
       "PSI-100-objective-2",
       "PSI-99-objective-1",
@@ -89,6 +87,6 @@
       "PSI-102-pub-12"
     ],
     "model": "gemini-3.5-flash-lite",
-    "saved_utc": "2026-11-14 21:58"
+    "saved_utc": "2026-11-14 22:25"
   }
 ]

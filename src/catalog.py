@@ -215,12 +215,3 @@ def compare(df: pd.DataFrame, psi_ids: list[str]) -> tuple[pd.DataFrame, list[bo
     table = pd.DataFrame({pid: [show(sub.loc[pid, f]) for f in fields] for pid in psi_ids},
                          index=[LABELS[f] for f in fields])
     return table, [table.loc[LABELS[f]].nunique() > 1 for f in fields]
-
-
-def as_context(df: pd.DataFrame) -> str:
-    """The whole catalog as text for the AI layer; blanks are written 'not stated'."""
-    blocks = []
-    for _, r in df.iterrows():
-        blocks.append("\n".join([f"psi_id: {r['psi_id']}"]
-                                + [f"{LABELS[c]}: {show(r[c])}" for c in COLUMNS if c != "psi_id"]))
-    return "\n\n".join(blocks)

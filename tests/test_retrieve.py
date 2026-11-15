@@ -51,10 +51,14 @@ def test_passage_text_is_verbatim_from_the_record():
 
 
 # ------------------------------------------------------------------ retrieval
-def test_search_returns_at_most_six_best_first(index):
+def test_search_returns_four_descriptive_then_two_publication_titles(index):
     r = index.search("smoke detection in microgravity")
-    assert 0 < len(r) <= 6
-    assert [p["score"] for p in r] == sorted((p["score"] for p in r), reverse=True)
+    fields = [p["field"] for p in r]
+    text = [p for p in r if p["field"] != retrieve.PUBLICATION]
+    pubs = [p for p in r if p["field"] == retrieve.PUBLICATION]
+    assert len(text) == 4 and len(pubs) == 2 and r == text + pubs, fields
+    for group in (text, pubs):
+        assert [p["score"] for p in group] == sorted((p["score"] for p in group), reverse=True)
     assert index.search("") == [] and index.search("zzzqqq xyzzy") == []
 
 
@@ -67,7 +71,7 @@ def test_hit_rate_at_top_6(index):
     assert len(QUESTIONS) == 10
     misses = [q["question"] for q in QUESTIONS
               if not {p["psi_id"] for p in index.search(q["question"])} & set(q["expected"])]
-    assert len(misses) <= 2, misses  # measured 2026-11-14: 9 of 10
+    assert len(misses) <= 2, misses  # measured 2026-11-14: 10 of 10 (4 descriptive + 2 titles)
 
 
 # ------------------------------------------------------------------ citation check

@@ -1,0 +1,22 @@
+# Dark space theme. Colours are also defined in src/theme.py for the charts.
+[theme]
+base = "dark"
+primaryColor = "#e36a20"              # flame orange: primary actions, key numbers
+backgroundColor = "#0b1020"           # near-black navy
+secondaryBackgroundColor = "#151c33"  # panels
+textColor = "#eef1fa"
+linkColor = "#6fb0ff"
+borderColor = "#2a3352"
+font = "sans-serif"
+headingFont = "sans-serif"
+baseRadius = "0.5rem"
+showWidgetBorder = true
+dataframeHeaderBackgroundColor = "#151c33"
+chartCategoricalColors = ["#e36a20", "#4594ee", "#9aa3b5"]
+
+[theme.sidebar]
+backgroundColor = "#0f1528"
+secondaryBackgroundColor = "#1a2240"
+
+[browser]
+gatherUsageStats = false

@@ -37,8 +37,15 @@ BEYOND = 0.10           # how far past the tested range the charts extend, shade
 
 TARGET_LABEL = {"d_ext_over_d0": "Extinction ratio d_ext / d0",
                 "burning_rate_k": "Burning rate K (unit unconfirmed)"}
-COLOR = {"CO2": "#2a78d6", "He": "#eb6834", "none": "#8a8984"}
-BAND_FILL = {"CO2": "rgba(42,120,214,0.18)", "He": "rgba(235,104,52,0.18)"}
+AXIS_LABEL = {"d_ext_over_d0": "Extinction ratio d_ext / d0 (no unit)",
+              "burning_rate_k": "Burning rate K (unit unconfirmed)"}
+# CO2 is the warm accent, He the cool one, tests without suppressant are grey reference data (src/theme.py).
+# Each series also has its own marker shape and line dash, so colour is never the only cue.
+COLOR = {"CO2": "#e36a20", "He": "#4594ee", "none": "#9aa3b5"}
+BAND_FILL = {"CO2": "rgba(227,106,32,0.20)", "He": "rgba(69,148,238,0.20)"}
+SHAPE = {"CO2": "circle", "He": "diamond", "none": "square-open"}
+DASH = {"CO2": "solid", "He": "dash"}
+INK = "#eef1fa"
 SERIES_NAME = {"CO2": "CO2", "He": "He", "none": "no suppressant"}
 
 LIMITS = [
@@ -194,7 +201,8 @@ def _points(fig: go.Figure, s: pd.DataFrame, target: str, diluent: str) -> int:
     fig.add_trace(go.Scatter(
         x=d["diluent_frac"], y=d[target], mode="markers",
         name=f"NASA tests, {SERIES_NAME[diluent]} ({len(d)})",
-        marker=dict(color=COLOR[diluent], size=9, line=dict(color="rgba(255,255,255,0.85)", width=1)),
+        marker=dict(color=COLOR[diluent], size=9, symbol=SHAPE[diluent],
+                    line=dict(color=COLOR[diluent] if diluent == "none" else "#0b1020", width=1.5 if diluent == "none" else 1)),
         customdata=d[["test_number", "flex_identifier", "d0_mm", "test_date", "test_end"]].to_numpy(),
         hovertemplate=("Test %{customdata[0]} (%{customdata[1]})<br>d0 %{customdata[2]} mm<br>"
                        "%{customdata[3]}<br>Test end: %{customdata[4]}<br>"
@@ -208,7 +216,7 @@ def _model(fig: go.Figure, c: pd.DataFrame, suppressant: str, d0_mm: float) -> N
                              fill="toself", fillcolor=BAND_FILL[suppressant], line=dict(width=0),
                              name=f"90% band, {suppressant}", hoverinfo="skip"))
     fig.add_trace(go.Scatter(x=c["fraction"], y=c["mean"], mode="lines",
-                             line=dict(color=COLOR[suppressant], width=2),
+                             line=dict(color=COLOR[suppressant], width=2.5, dash=DASH[suppressant]),
                              name=f"Model mean, {suppressant}, d0 {d0_mm:.2f} mm",
                              customdata=c[["lower", "upper"]].to_numpy(),
                              hovertemplate=("Model, " + suppressant + " %{x:.3f}<br>mean %{y:.2f}<br>"
@@ -217,18 +225,16 @@ def _model(fig: go.Figure, c: pd.DataFrame, suppressant: str, d0_mm: float) -> N
 
 def _frame(fig: go.Figure, target: str, tested_hi: float, tested_lo: float, y_max: float, current: float | None):
     x_max = tested_hi + BEYOND
-    fig.add_vrect(x0=tested_hi, x1=x_max, fillcolor="rgba(138,137,132,0.22)", line_width=0, layer="below",
-                  annotation_text="no NASA tests here", annotation_position="top left")
+    fig.add_vrect(x0=tested_hi, x1=x_max, fillcolor="rgba(154,163,181,0.16)", line_width=0, layer="below",
+                  annotation_text="no NASA tests", annotation_position="top right")
     if tested_lo > 0:
-        fig.add_vrect(x0=0, x1=tested_lo, fillcolor="rgba(138,137,132,0.22)", line_width=0, layer="below",
+        fig.add_vrect(x0=0, x1=tested_lo, fillcolor="rgba(154,163,181,0.16)", line_width=0, layer="below",
                       annotation_text="no NASA tests here", annotation_position="top left")
     if current is not None:
         fig.add_vline(x=current, line=dict(color=COLOR["none"], width=1, dash="dot"),
                       annotation_text="your input", annotation_position="bottom right")
-    fig.update_layout(xaxis_title="Suppressant mole fraction", yaxis_title=TARGET_LABEL[target],
-                      xaxis=dict(range=[-0.01, x_max]), yaxis=dict(range=[0, y_max]),
-                      legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
-                      margin=dict(l=10, r=10, t=60, b=10), height=440, hovermode="closest")
+    fig.update_layout(xaxis_title="Suppressant (mole fraction)", yaxis_title=AXIS_LABEL[target],
+                      xaxis=dict(range=[-0.01, x_max]), yaxis=dict(range=[0, y_max]), height=440)
 
 
 def ratio_figure(s: pd.DataFrame, c: pd.DataFrame, suppressant: str, d0_mm: float, threshold: float,
@@ -238,7 +244,7 @@ def ratio_figure(s: pd.DataFrame, c: pd.DataFrame, suppressant: str, d0_mm: floa
     _model(fig, c, suppressant, d0_mm)
     _points(fig, s, "d_ext_over_d0", "none")
     _points(fig, s, "d_ext_over_d0", suppressant)
-    fig.add_hline(y=threshold, line=dict(color="#d03b3b", width=1.5, dash="dash"),
+    fig.add_hline(y=threshold, line=dict(color=INK, width=1.5, dash="dot"),
                   annotation_text=f"near-limit threshold {threshold:.2f} (team's choice)",
                   annotation_position="bottom left")
     lo, hi = fraction_range(s)

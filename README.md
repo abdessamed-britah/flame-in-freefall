@@ -159,16 +159,13 @@ out to do and how, so the page answers "what was studied", not "what was
 measured".
 
 `src/retrieve.py` ranks passages by TF-IDF cosine similarity (scikit-learn, word
-1-2 grams, top 6), fitted when the app starts. No network and no extra package.
+1-2 grams), fitted when the app starts. No network and no extra package. For each question it returns the 4 closest passages from descriptive fields and the 2 closest publication titles, because titles are short and would otherwise crowd out the paragraphs; the page lists titles under "Related publications".
 
 **Retrieval check.** `tests/retrieval_questions.json` holds 10 questions whose
 correct investigation is unambiguous from the records (for example smoke
 particle sizes: SAME or SAME-R). A hit means a passage of the correct
-investigation is among the top 6. Result: **9 of 10**, with no tuning. The miss
-is "Can a commercial particle counter measure dust and aerosols on the space
-station?" (DAFT, PSI-47): the top 6 came from SAME and droplet investigations.
-Known weakness: the 352 publication titles are short, so they often outrank the
-longer objective and approach paragraphs.
+investigation is among the 6 retrieved. Result: **10 of 10**. With a plain top 6 it
+was 9 of 10: the DAFT question (PSI-47) was crowded out by publication titles.
 
 ## Validation
 
@@ -199,7 +196,7 @@ extrapolates to a new suppressant, and `predict()` reports `in_range = False`
 outside the tested conditions.
 
 The raw FLEX file is audited by `src/audit.py` (45 checks, `reports/audit.md`),
-and 72 automated tests cover the prediction range checks, the catalog scoring,
+and 63 automated tests cover the prediction range checks, the catalog scoring,
 the AI checks, the corpus, the retrieval and the unified table (every converted value is traced back
 to its source cell, and the FLEX rows are compared with `flex_clean.csv`).
 
@@ -267,6 +264,15 @@ under the team's direction. The team set the rules (never fill a missing value,
 never guess a unit), made the rulings on ambiguous columns, and reviewed each
 step. No AI generated or altered any NASA data value.
 
+## Look and accessibility
+
+One dark theme (`.streamlit/config.toml`) and one Plotly template
+(`src/theme.py`) for every chart: a warm accent (orange), a cool accent (blue)
+and grey for reference data. The two accents were checked for colour-blind
+separation on the dark background, and every series also has its own marker
+shape or line dash, so colour is never the only cue. The layout was checked at
+phone width (390 px) on all five pages. No external fonts or images.
+
 ## Run it locally
 
 ```
@@ -322,7 +328,7 @@ data/catalog/  investigations.csv, curated_labels.csv, columns_not_used.csv
 data/unified/  tests_conditions.csv (one row per source-table row), units_map.csv
 data/corpus/   passages.jsonl (text of the PSI records), saved_answers.json
 src/           audit.py, clean.py, eda.py, model.py, lab.py, catalog.py, ai.py,
-               fetch_psi.py, build_catalog.py, normalize.py, build_corpus.py, retrieve.py,
+               fetch_psi.py, build_catalog.py, normalize.py, build_corpus.py, retrieve.py, theme.py,
                build_saved_answers.py (calls the AI service; needs a key)
 models/        saved models (joblib), one per target, written by src/model.py
 app/           Home.py, pages/1_Catalog.py, pages/2_Suppression_Lab.py, pages/3_Unified_Data.py,

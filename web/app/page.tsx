@@ -3,6 +3,7 @@ import Link from "next/link";
 import meta from "@/public/data/meta.json";
 import { Caveat, Finding, Metric, Panel } from "@/components/ui";
 import { pick, useAudience } from "@/lib/audience";
+import { GravityStrip } from "@/components/HomeSections";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -44,7 +45,9 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <GravityStrip />
+
+      <div className="mt-16 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Metric label="NASA investigations" value={fmt(c.investigations)} hint="PSI, Combustion Science" />
         <Metric label="Unified test rows" value={fmt(c.unified_rows)} hint="from 22 NASA tables" />
         <Metric label="Passages of NASA text" value={fmt(c.passages)} hint="searchable, cited verbatim" />

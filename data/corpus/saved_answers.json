@@ -1,92 +1,131 @@
 [
   {
     "question": "What does the FLEX investigation aim to learn about fire suppressants such as CO2 and helium?",
-    "text": "- Measure the effectiveness of various gaseous fire suppressants such as CO2, He, and SF6 [PSI-69-objective-1]\n- Systematically analyze the effects of different ambient conditions and suppressant concentrations [PSI-69-objective-1]",
+    "text": "- Map the effectiveness of various gaseous fire suppressants such as CO2, He, and SF6 in microgravity environments [PSI-69-objective-1].\n- Systematically analyze the effects of different suppressant concentrations [PSI-69-objective-1].\n- Assess and quantify the effectiveness of inert-gas suppressants in microgravity [nasa-glenn-combustion-science-13].\n- Examine how the addition of an inert gas suppressant influences the flammability limit of heptane and methanol fuels [nasa-researchers-guide-combustion-pdf-18].",
     "citations": [
-      "PSI-69-objective-1"
+      "PSI-69-objective-1",
+      "nasa-glenn-combustion-science-13",
+      "nasa-researchers-guide-combustion-pdf-18"
     ],
     "retrieved_ids": [
       "PSI-69-objective-1",
+      "card-flex-2",
       "PSI-98-objective-1",
       "PSI-100-objective-1",
-      "PSI-39-title-1",
-      "PSI-68-pub-33",
-      "PSI-69-pub-45"
+      "nasa-glenn-combustion-science-13",
+      "nasa-researchers-guide-combustion-pdf-18"
     ],
     "model": "gemini-3.5-flash-lite",
-    "saved_utc": "2026-11-14 22:25"
+    "saved_utc": "2026-11-15 03:55"
   },
   {
     "question": "Why did NASA measure smoke particle sizes in low gravity?",
-    "text": "- To quantify the sizes that liquid smoke particulate achieves in low gravity and relate the droplet size distribution to smoke generation and smoke transport conditions [PSI-102-objective-1].",
+    "text": "- To evaluate the smoke particulate size from materials and conditions typical of those expected in spacecraft fires [ntrs-20140006585-1].\n- To establish design requirements for future spacecraft smoke detectors [ntrs-20140006585-1].\n- To quantify the sizes that the liquid smoke particulate achieves in low gravity and to relate the droplet size distribution to smoke generation and transport conditions [PSI-102-objective-1].",
     "citations": [
+      "ntrs-20140006585-1",
       "PSI-102-objective-1"
     ],
     "retrieved_ids": [
+      "PSI-102-pub-3",
+      "ntrs-20140006585-1",
       "PSI-98-objective-2",
       "PSI-100-objective-2",
-      "PSI-99-objective-1",
-      "PSI-102-objective-1",
-      "PSI-102-pub-3",
-      "PSI-102-pub-1"
+      "ntrs-20130000422-1",
+      "PSI-102-objective-1"
     ],
     "model": "gemini-3.5-flash-lite",
-    "saved_utc": "2026-11-14 22:25"
+    "saved_utc": "2026-11-15 03:55"
   },
   {
     "question": "How rapidly does a large-scale fire grow in low gravity?",
-    "text": "- The objectives of SAFFIRE-I, SAFFIRE-II, and SAFFIRE-III include determining how rapidly a large scale fire grows in low-gravity [PSI-98-objective-2, PSI-100-objective-2, PSI-99-objective-1].",
+    "text": "- One of the specific objectives of the Spacecraft Fire Experiments (Saffire-I, -II, and -III) is to determine how rapidly a large scale fire grows in low-gravity [PSI-98-objective-2, PSI-100-objective-2, PSI-99-objective-1, ntrs-20170000230-1, ntrs-20170001636-1].",
     "citations": [
       "PSI-98-objective-2",
       "PSI-100-objective-2",
-      "PSI-99-objective-1"
+      "PSI-99-objective-1",
+      "ntrs-20170000230-1",
+      "ntrs-20170001636-1"
     ],
     "retrieved_ids": [
       "PSI-98-objective-2",
       "PSI-100-objective-2",
       "PSI-99-objective-1",
-      "PSI-98-hypothesis-1",
       "PSI-102-pub-12",
-      "PSI-102-pub-1"
+      "ntrs-20170000230-1",
+      "ntrs-20170001636-1"
     ],
     "model": "gemini-3.5-flash-lite",
-    "saved_utc": "2026-11-14 22:25"
+    "saved_utc": "2026-11-15 03:55"
   },
   {
     "question": "Which experiment uses a gas burner to emulate the burning of solid and liquid fuels?",
-    "text": "- The ACME BRE experiment uses a gas burner to emulate condensed-phase burning of a real solid fuel or liquid fuel absorbed in an inert matrix [PSI-20-hypothesis-2, PSI-20-pub-2].",
+    "text": "- The Burning Rate Emulator (BRE) uses a flat porous burner fed with gaseous fuel to simulate the burning of solid and liquid fuels [nasa-researchers-guide-combustion-pdf-29].",
     "citations": [
-      "PSI-20-hypothesis-2",
-      "PSI-20-pub-2"
+      "nasa-researchers-guide-combustion-pdf-29"
     ],
     "retrieved_ids": [
+      "PSI-20-pub-2",
+      "nasa-researchers-guide-combustion-pdf-29",
+      "nasa-researchers-guide-combustion-pdf-129",
       "PSI-20-hypothesis-2",
       "PSI-68-impacts-1",
-      "PSI-69-objective-1",
-      "PSI-159-proposal-1",
-      "PSI-20-pub-2",
-      "PSI-20-pub-12"
+      "PSI-69-objective-1"
     ],
     "model": "gemini-3.5-flash-lite",
-    "saved_utc": "2026-11-14 22:25"
+    "saved_utc": "2026-11-15 03:55"
   },
   {
     "question": "How do low-gravity flammability limits compare with NASA's normal-gravity material screening test?",
-    "text": "- SAFFIRE-I, SAFFIRE-II, and SAFFIRE-III investigate low-gravity flammability limits compared to those obtained in NASA’s normal gravity material flammability screening test [PSI-100-objective-2, PSI-99-objective-1, PSI-98-objective-2].",
+    "text": "- The low-g flammability limits are investigated and compared to those obtained in NASA's normal gravity material flammability screening test [PSI-100-objective-2, PSI-99-objective-1, ntrs-20170000230-1, ntrs-20170001636-1].",
     "citations": [
       "PSI-100-objective-2",
       "PSI-99-objective-1",
-      "PSI-98-objective-2"
+      "ntrs-20170000230-1",
+      "ntrs-20170001636-1"
     ],
     "retrieved_ids": [
       "PSI-98-objective-3",
       "PSI-100-objective-2",
       "PSI-99-objective-1",
-      "PSI-98-objective-2",
+      "ntrs-20170000230-1",
       "PSI-26-pub-3",
-      "PSI-102-pub-12"
+      "ntrs-20170001636-1"
     ],
     "model": "gemini-3.5-flash-lite",
-    "saved_utc": "2026-11-14 22:25"
+    "saved_utc": "2026-11-15 03:55"
+  },
+  {
+    "question": "Why did the Apollo 1 fire spread so quickly in the pure oxygen atmosphere, and what did NASA change following the fire?",
+    "text": "- The fire spread quickly because of the pure oxygen atmosphere, causing a rapid rise in temperature and pressure that led to the rupture of the Command Module pressure vessel [nasa-sma-apollo-1-22].",
+    "citations": [
+      "nasa-sma-apollo-1-22"
+    ],
+    "retrieved_ids": [
+      "nasa-sma-apollo-1-22",
+      "nasa-sma-apollo-13-16",
+      "ntrs-20150008962-1",
+      "ntrs-20150022123-1",
+      "nasa-sma-apollo-1-2",
+      "nasa-researchers-guide-combustion-pdf-170"
+    ],
+    "model": "gemini-3.5-flash-lite",
+    "saved_utc": "2026-11-15 03:56"
+  },
+  {
+    "question": "What did FLEX discover about cool flames after the visible flame of a heptane droplet went out?",
+    "text": "- The experiments identified stable, quasi-steady cool flames that form after radiative extinction of the visible flame for heptane droplet combustion [nasa-researchers-guide-combustion-pdf-107].",
+    "citations": [
+      "nasa-researchers-guide-combustion-pdf-107"
+    ],
+    "retrieved_ids": [
+      "PSI-68-pub-15",
+      "PSI-39-title-1",
+      "nasa-researchers-guide-combustion-pdf-107",
+      "nasa-researchers-guide-combustion-pdf-19",
+      "PSI-159-title-1",
+      "PSI-142-approach-1"
+    ],
+    "model": "gemini-3.5-flash-lite",
+    "saved_utc": "2026-11-15 03:57"
   }
 ]

@@ -27,6 +27,9 @@ QUESTIONS = [
     "How rapidly does a large-scale fire grow in low gravity?",
     "Which experiment uses a gas burner to emulate the burning of solid and liquid fuels?",
     "How do low-gravity flammability limits compare with NASA's normal-gravity material screening test?",
+    # the next two need the documents beyond the PSI records
+    "Why did the Apollo 1 fire spread so quickly in the pure oxygen atmosphere, and what did NASA change following the fire?",
+    "What did FLEX discover about cool flames after the visible flame of a heptane droplet went out?",
 ]
 
 

@@ -182,8 +182,52 @@ citation will be discarded.
 
 
 def passages_as_context(passages: list[dict]) -> str:
-    return "\n\n".join(f"[{p['passage_id']}] {p['psi_id']} {p['acronym'] or p['investigation']}, {p['field']}:\n"
+    return "\n\n".join(f"[{p['passage_id']}] {p['doc_title']}, {p['section']} ({p['source_type'].replace('_', ' ')}):\n"
                        f"{p['text']}" for p in passages)
+
+
+# ---------------------------------------------------------------------------
+# support check: are the words of a bullet in the passages it cites?
+# ---------------------------------------------------------------------------
+# Threshold chosen on 2026-11-15 from the model's own checked answers (see reports/rag_eval.md):
+# bullets scored against the passages they cite, and the same bullets scored against passages they do not cite.
+SUPPORT_THRESHOLD = 0.5
+_STOP = set("""a an and are as at be been being but by can could did do does for from had has have how if in into is it
+its may might more most must not of on or our such than that the their them then there these they this those to
+was were what when where which while who will with would also about above after all any both each few other some
+only own same so too very use used using uses include includes including aim aims aimed investigation investigations
+experiment experiments study studies nasa""".split())
+
+
+def content_words(text: str) -> list[str]:
+    """Lower-case words of 3+ letters or any number, without citations, stop words and a plural s."""
+    text = _CITATION.sub(" ", text)
+    words = re.findall(r"[a-z][a-z0-9]{2,}|\d+(?:\.\d+)?", text.lower())
+    return [w[:-1] if len(w) > 4 and w.endswith("s") and not w.endswith("ss") else w for w in words if w not in _STOP]
+
+
+def support(text: str, passages: list[dict]) -> list[dict]:
+    """For each bullet: the share of its content words that occur in the passages it cites."""
+    by_id = {p["passage_id"]: p for p in passages}
+    out = []
+    for line in [ln.strip() for ln in text.splitlines() if ln.strip()]:
+        words = list(dict.fromkeys(content_words(line)))
+        cited = " ".join(by_id[i]["text"] + " " + by_id[i]["doc_title"] for i in cited_ids(line) if i in by_id)
+        have = set(content_words(cited))
+        share = sum(w in have for w in words) / len(words) if words else 1.0
+        out.append({"line": line, "share": round(share, 2), "weak": share < SUPPORT_THRESHOLD,
+                    "missing": [w for w in words if w not in have]})
+    return out
+
+
+_HOW_MUCH = re.compile(r"(?i)\b(how much|what (?:amount|fraction|percentage|percent|concentration|level)|"
+                       r"amount of|quantity of|enough)\b")
+_SUPPRESSANT = re.compile(r"(?i)\b(suppress\w*|extinguish\w*|co2|carbon dioxide|helium|diluent\w*|inert gas\w*|put out)\b")
+
+
+def asks_how_much_suppressant(question: str) -> bool:
+    """True for questions such as "How much CO2 is needed to put the flame out?": the Suppression Lab answers those."""
+    return bool(_HOW_MUCH.search(question) and _SUPPRESSANT.search(question))
 
 
 def check_passage_citations(text: str, retrieved_ids: set[str]) -> tuple[bool, str]:
@@ -204,14 +248,15 @@ def answer_from_passages(question: str, passages: list[dict], llm: LLM | None = 
     """passages: the retrieved passages (src/retrieve.py). The model answers only from them.
     source is "ai" (checked answer), "search" (no AI summary: show the passages) or "none" (nothing retrieved)."""
     def result(text, source, label, note="", citations=None):
-        return {"text": text, "source": source, "label": label, "note": note, "citations": citations or []}
+        return {"text": text, "source": source, "label": label, "note": note, "citations": citations or [],
+                "support": support(text, passages) if source == "ai" and citations else []}
 
     if not passages:
         return result(NO_PASSAGES_REPLY, "none", SEARCH_LABEL)
     reply, note = _run(llm, RAG_SYSTEM, f"Passages:\n\n{passages_as_context(passages)}\n\nQuestion: {question}")
     if reply is not None:
         reply = reply.strip()
-        if reply == NOT_IN_PASSAGES:
+        if reply.lstrip("-* ").strip() == NOT_IN_PASSAGES:  # the sentinel, with or without a bullet mark
             return result(NOT_IN_PASSAGES_REPLY, "ai", AI_LABEL)
         ok, why = check_passage_citations(reply, {p["passage_id"] for p in passages})
         if ok:

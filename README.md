@@ -51,12 +51,15 @@ tests. A value is converted only when the source column states its unit;
 the conversion applied. Measurements stay in NASA's original tables, linked by
 PSI id, file and row.
 
-**Ask NASA's records.** Ask a question in plain words. The six passages of
-NASA's PSI records closest to the question are retrieved, the AI answers only
-from those six, and every claim cites a passage that is shown word for word
-with its PSI link. Five example questions have saved, checked answers so the
-page never waits on the AI service. Without a key, or if the AI fails, the page
-shows the retrieved passages as search results.
+**Ask NASA's records.** Ask a question in plain words. The six closest
+passages are retrieved from NASA text (PSI records, NASA web pages, the
+Researcher's Guide, NTRS report abstracts) and from short "data cards" computed
+from NASA tables. The AI answers only from those six, and every claim cites a
+passage that is shown word for word with its source type, document title and
+link. Bullets whose words are mostly absent from the passages they cite are
+flagged "weakly supported". Seven example questions have saved, checked answers
+so the page never waits on the AI service. Without a key, or if the AI fails,
+the page shows the retrieved passages as search results.
 
 **Explain this result.** In the Suppression Lab, a short AI explanation of the
 numbers on the page, checked before display, with a plain template as fallback.
@@ -137,35 +140,60 @@ unit. Units written inside the cells are not read.
 
 ## Text corpus and retrieval
 
-`src/build_corpus.py` reads the 24 raw PSI records and writes
-`data/corpus/passages.jsonl`: 558 passages, one per paragraph, each with
-`passage_id`, `psi_id`, `acronym`, `field` and `source_url`. The text is copied
-word for word; only HTML tags and entities are removed.
+`src/fetch_docs.py` saves the documents untouched in `data/raw/docs/` with URL,
+access time and SHA-256 in `data/raw/docs/manifest.csv`. `src/build_corpus.py`
+writes `data/corpus/passages.jsonl`: 874 passages, one per paragraph, each with
+`passage_id`, `source_type`, `doc_id`, `doc_title`, `section`, `source_url` and
+the investigation(s) its text names (`psi_ids`).
 
-| Field in the PSI record | Records with text | Passages |
-|---|---|---|
-| title | 24 | 24 |
-| proposalTitle | 11 | 11 |
-| objective | 24 | 46 |
-| approach | 24 | 41 |
-| hypothesis | 24 | 35 |
-| researchImpacts | 24 | 30 |
-| experimentHardware | 19 | 19 |
-| publications: title | 23 | 352 |
+| Source type | What | Documents | Passages |
+|---|---|---|---|
+| `psi_record` | The 24 PSI records: title, objective, approach, hypothesis, research impacts, hardware, publication titles | 24 | 558 |
+| `nasa_page` | The six NASA pages listed as challenge resources (Researcher's Guide page, Glenn combustion science, Apollo 1, Apollo 13, Mir fire, Spinoff fire detector) | 6 | 83 |
+| `nasa_report` | NASA's "A Researcher's Guide to: Combustion Science" (NP-2015-10-034-JSC), the PDF linked from the first page | 1 | 175 |
+| `ntrs_abstract` | Abstracts from NASA's Technical Reports Server for publications listed in the PSI records, plus NASA/TP-2015-216046 | 26 | 30 |
+| `data_card` | Counts and ranges computed by code from `investigations.csv`, `tests_conditions.csv` and `flex_clean.csv`; each names its source file. Shown as "Computed from NASA table" | 25 | 28 |
 
-The `description` field is empty in all 24 records, and the records hold no
-results text and no publication abstracts. They say what each investigation set
-out to do and how, so the page answers "what was studied", not "what was
-measured".
+Text is copied word for word; only HTML tags and entities are removed, and
+wrapped lines of the PDF are joined. Image captions, bylines and paragraphs
+under 80 characters of the web pages are left out.
 
-`src/retrieve.py` ranks passages by TF-IDF cosine similarity (scikit-learn, word
-1-2 grams), fitted when the app starts. No network and no extra package. For each question it returns the 4 closest passages from descriptive fields and the 2 closest publication titles, because titles are short and would otherwise crowd out the paragraphs; the page lists titles under "Related publications".
+**Rights.** Only NASA-authored or NASA-published text is used.
+`data/corpus/documents.csv` records the rights basis of every document. The 292
+distinct publication titles of the PSI records were each searched once on the
+NTRS API: 192 had no NTRS record (mostly journal papers), 37 had no confident
+title match, 62 matched (60 distinct records). An abstract is used only when
+NTRS's own copyright determination permits public use; that left 26 documents
+with text and 35 kept as title and link only. Every lookup is in
+`data/corpus/ntrs_log.csv`.
 
-**Retrieval check.** `tests/retrieval_questions.json` holds 10 questions whose
-correct investigation is unambiguous from the records (for example smoke
-particle sizes: SAME or SAME-R). A hit means a passage of the correct
-investigation is among the 6 retrieved. Result: **10 of 10**. With a plain top 6 it
-was 9 of 10: the DAFT question (PSI-47) was crowded out by publication titles.
+**Retrieval.** `src/retrieve.py` ranks passages by TF-IDF cosine similarity
+(scikit-learn, word 1-2 grams), fitted when the app starts: no network, no
+extra package. It returns the 6 best with a quota per kind of source (PSI
+paragraphs 3, PSI publication titles 1, NASA pages 3, NASA report 2, NTRS
+abstracts 2, data cards 1) so that one kind cannot fill every place.
+
+**Retrieval check** (`tests/retrieval_questions.json`, `reports/rag_eval.md`):
+30 questions written before retrieval was run on the new corpus. A hit means
+one of the 6 retrieved passages belongs to the expected document or
+investigation.
+
+| Group | Hits |
+|---|---|
+| The 10 earlier questions | 10 of 10 |
+| 10 about findings, answerable only from the new documents | 10 of 10 |
+| 10 reworded to share few words with the source text | 8 of 10 |
+
+Embeddings were planned as a second ranker only if the reworded group scored
+below 7 of 10; it scored 8, so they were not added. Known weakness: word
+matching cannot link synonyms ("spheres" for "droplets"), which is what the two
+misses are.
+
+**Support check.** For each bullet of an answer, the share of its content words
+found in the passages it cites; below 0.50 the bullet is flagged "weakly
+supported", not hidden. On the saved answers, correctly cited bullets scored
+0.83 to 1.00 and the same bullets against passages they do not cite scored 0.00
+to 0.57 (49 of 53 below 0.50). It counts words; it does not judge meaning.
 
 ## Validation
 
@@ -196,7 +224,7 @@ extrapolates to a new suppressant, and `predict()` reports `in_range = False`
 outside the tested conditions.
 
 The raw FLEX file is audited by `src/audit.py` (45 checks, `reports/audit.md`),
-and 63 automated tests cover the prediction range checks, the catalog scoring,
+and 70 automated tests cover the prediction range checks, the catalog scoring,
 the AI checks, the corpus, the retrieval and the unified table (every converted value is traced back
 to its source cell, and the FLEX rows are compared with `flex_clean.csv`).
 
@@ -247,12 +275,12 @@ SDK) for two things. All AI text is labelled as AI-generated.
 
 | Feature | What the model receives | Check before display |
 |---|---|---|
-| Ask NASA's records | The question and the 6 retrieved passages, nothing else | Every line must cite a `[passage_id]`, and every cited passage must be one of the 6 retrieved. Otherwise the answer is rejected and the retrieved passages are shown as search results. If the passages do not answer the question the model must say so. |
+| Ask NASA's records | The question and the 6 retrieved passages, nothing else | Every line must cite a `[passage_id]`, and every cited passage must be one of the 6 retrieved. Otherwise the answer is rejected and the retrieved passages are shown as search results. If the passages do not answer the question the model must say so. Each bullet also gets a support score (share of its words found in the cited passages) and is flagged when it is below 0.50. |
 | Explain this result | The numbers already on the Suppression Lab page | Every number in the text must be one of those numbers. Otherwise the text is rejected. |
 
 A rejected answer, a failed call, or a missing key all lead to the same place:
 text built from the data without AI (search results, or a plain template
-summary), labelled as not AI-generated. The five saved answers were generated
+summary), labelled as not AI-generated. The seven saved answers were generated
 by the same model, passed the same check, and are labelled "saved answer"; a
 test re-runs the check on them. The
 relevance ranking and the predictions never use AI.
@@ -307,7 +335,10 @@ python src/model.py           # reports/validation.md, validation.json, models/
 python src/fetch_psi.py       # data/raw/psi/ (skips files already saved)
 python src/build_catalog.py   # data/catalog/investigations.csv
 python src/normalize.py       # data/unified/tests_conditions.csv, units_map.csv
-python src/build_corpus.py    # data/corpus/passages.jsonl
+python src/fetch_docs.py pages   # data/raw/docs/ (skips files already saved)
+python src/fetch_docs.py ntrs    # one NTRS search per publication title, about 15 minutes
+python src/build_corpus.py    # data/corpus/passages.jsonl, documents.csv, ntrs_log.csv
+python src/eval_retrieval.py  # hit rates on the 30 check questions
 python -m pytest tests -q
 ```
 
@@ -326,14 +357,16 @@ data/raw/psi/  PSI records, experimental tables and manifest.csv, untouched
 data/clean/    flex_clean.csv (274 rows), exclusions.csv (tests left out of modelling, per target)
 data/catalog/  investigations.csv, curated_labels.csv, columns_not_used.csv
 data/unified/  tests_conditions.csv (one row per source-table row), units_map.csv
-data/corpus/   passages.jsonl (text of the PSI records), saved_answers.json
+data/raw/docs/ NASA pages, the Researcher's Guide PDF, NTRS responses and manifest.csv, untouched
+data/corpus/   passages.jsonl, documents.csv (rights per document), ntrs_log.csv, saved_answers.json
 src/           audit.py, clean.py, eda.py, model.py, lab.py, catalog.py, ai.py,
-               fetch_psi.py, build_catalog.py, normalize.py, build_corpus.py, retrieve.py, theme.py,
+               fetch_psi.py, build_catalog.py, normalize.py, fetch_docs.py, html_text.py, build_corpus.py, retrieve.py, eval_retrieval.py,
+               support_calibration.py, theme.py,
                build_saved_answers.py (calls the AI service; needs a key)
 models/        saved models (joblib), one per target, written by src/model.py
 app/           Home.py, pages/1_Catalog.py, pages/2_Suppression_Lab.py, pages/3_Unified_Data.py,
                pages/4_Ask_NASA_Records.py
-reports/       audit.md, eda.md, validation.md, validation.json, figures/
+reports/       audit.md, eda.md, validation.md, validation.json, rag_eval.md, figures/
 tests/         test_predict.py, test_catalog.py, test_ai.py, test_normalize.py, test_retrieve.py,
                retrieval_questions.json, fixtures/
 ```

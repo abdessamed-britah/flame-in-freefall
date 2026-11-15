@@ -34,8 +34,9 @@ def saved_answers():
 
 
 def show_passage(p: dict) -> None:
-    name = f"{p['psi_id']} {p['acronym'] or p['investigation']}"
-    st.markdown(f"**[{p['passage_id']}]** {name}, {p['field']} - [open PSI page]({p['source_url']})")
+    where = p["doc_title"] + (f", {p['section']}" if p["section"] and p["section"] != p["doc_title"] else "")
+    st.markdown(f"**[{p['passage_id']}]** `{retrieve.SOURCE_LABEL[p['source_type']]}` {where} - "
+                f"[open source]({p['source_url']})")
     st.markdown("> " + p["text"].replace("\n", "  \n> "))
 
 
@@ -47,6 +48,30 @@ def show_publications(passages: list[dict], cited: list[str]) -> None:
             mark = " (cited above)" if p["passage_id"] in cited else ""
             st.markdown(f"- {p['text']} - {p['psi_id']} {p['acronym'] or p['investigation']}, "
                         f"[open PSI page]({p['source_url']}) **[{p['passage_id']}]**{mark}")
+
+
+def show_answer(out: dict) -> None:
+    """The bullets, with a flag on those whose words are mostly absent from the passages they cite."""
+    weak = {x["line"]: x for x in out.get("support", []) if x["weak"]}
+    lines = []
+    for line in [ln for ln in out["text"].splitlines() if ln.strip()]:
+        x = weak.get(line.strip())
+        lines.append(line + (f" :orange-badge[weakly supported: {x['share']:.0%} of its words are in the cited text]"
+                             if x else ""))
+    st.markdown("\n".join(lines))
+    if weak:
+        st.caption(f"\"Weakly supported\" means less than {ai.SUPPORT_THRESHOLD:.0%} of the bullet's content words "
+                   "occur in the passages it cites. It is a word count, not a judgement of meaning: read the passage.")
+
+
+def lab_link(question: str) -> None:
+    if ai.asks_how_much_suppressant(question):
+        st.markdown("**How much suppressant?** NASA's records describe aims, not amounts. The Suppression Lab "
+                    "estimates the CO2 or He fraction from the FLEX test data.")
+        try:
+            st.page_link("pages/2_Suppression_Lab.py", label="Open the Suppression Lab", icon=":material/science:")
+        except Exception:  # the page is being run on its own, outside the app's navigation
+            st.caption("Open **Suppression Lab** in the sidebar.")
 
 
 theme.header("Ask NASA's records",
@@ -100,6 +125,7 @@ if state:
         ok, why = ai.check_passage_citations(a["text"], {p["passage_id"] for p in passages})
         if ok:
             out = {"text": a["text"], "source": "ai", "citations": a["citations"], "note": "",
+                   "support": ai.support(a["text"], passages),
                    "label": f"Saved answer: AI-generated ({a['model']}) on {a['saved_utc']} UTC, checked against "
                             "the passages below, and stored in the repository. Not a live call."}
         else:  # the corpus changed since the answer was saved
@@ -115,7 +141,8 @@ if state:
     text_passages = [p for p in passages if p["field"] != retrieve.PUBLICATION]
     if out["source"] == "ai":
         st.caption(out["label"])
-        st.markdown(out["text"])
+        show_answer(out)
+        lab_link(question)
         cited = [by_id[i] for i in out["citations"] if by_id[i]["field"] != retrieve.PUBLICATION]
         if cited:
             st.markdown("**Cited passages, word for word**")
@@ -131,21 +158,28 @@ if state:
         st.markdown(f"**{out['label']}**")
         if out["note"]:
             st.caption(out["note"])
+        lab_link(question)
         for p in text_passages:
             show_passage(p)
         show_publications(passages, [])
     else:
         theme.note(out["text"])
+        lab_link(question)
 
 with st.expander("How this works, and its limits"):
+    n_type = {t: sum(p["source_type"] == t for p in ix.passages) for t in retrieve.SOURCE_LABEL}
     st.markdown(
-        f"- The corpus is {len(ix.passages)} passages copied word for word from the "
-        f"{len({p['psi_id'] for p in ix.passages})} NASA PSI Combustion Science records: objectives, approach, "
-        "hypotheses, research impacts, hardware and publication titles.\n"
-        f"- For each question, the {retrieve.TOP_DESCRIPTIVE} closest descriptive passages and the "
-        f"{retrieve.TOP_PUBLICATIONS} closest publication titles are retrieved by word matching (TF-IDF). "
-        "No AI is involved in the search.\n"
+        f"- The corpus is {len(ix.passages)} passages, copied word for word: "
+        + "; ".join(f"{n} from {retrieve.SOURCE_LABEL[t]}s" for t, n in n_type.items() if n and t != "data_card")
+        + f"; plus {n_type['data_card']} short passages **computed from NASA tables** by this project's code "
+        "(counts and ranges, each naming its source file).\n"
+        "- Only NASA-authored or NASA-published text is used. Where NASA's report server does not mark an abstract "
+        "as free for public use, only its title and link are kept.\n"
+        f"- For each question the {retrieve.TOP_K} closest passages are retrieved by word matching (TF-IDF), with a "
+        "limit per kind of source so that one kind cannot fill every place. No AI is involved in the search.\n"
         "- The AI sees only those passages and must cite one for every claim. If it cites a passage that was not "
         "retrieved, or leaves a claim uncited, the answer is rejected and the search results are shown instead.\n"
-        "- These records describe what each investigation set out to do and how; they contain few measured "
-        "results. For numbers, use the Suppression Lab and the Unified Data page.")
+        "- Each bullet is also checked for support: the share of its content words found in the passages it cites. "
+        "Low-support bullets are flagged, not hidden.\n"
+        "- The PSI records describe what each investigation set out to do; findings come mostly from the NASA pages, "
+        "the Researcher's Guide and the report abstracts. For numbers, use the Suppression Lab and Unified Data.")

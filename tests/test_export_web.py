@@ -89,3 +89,13 @@ def test_saved_answers_and_validation_are_exported():
     v = load("validation.json")
     he = [r for r in v["lodo"] if r["Suppressant never seen in training"] == "He"]
     assert he and all(r["MAE"] > 0 for r in he)
+
+
+def test_rag_index_matches_the_fitted_vectorizer():
+    import retrieve
+    d = json.loads((ROOT / "web" / "data" / "rag_index.json").read_text(encoding="utf-8"))
+    ix = retrieve.build_index()
+    assert d["vocabulary"] == sorted(ix.vectorizer.vocabulary_, key=ix.vectorizer.vocabulary_.get)
+    assert [p["id"] for p in d["passages"]] == [p["passage_id"] for p in ix.passages]
+    for q in d["parity"]:
+        assert q["ids"] == [p["passage_id"] for p in ix.search(q["question"])]

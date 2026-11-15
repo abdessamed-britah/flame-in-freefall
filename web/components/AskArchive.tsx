@@ -1,8 +1,9 @@
 "use client";
 // Floating "Ask the archive" button and panel, on every page. Shows the saved, checked answers from
-// public/data/rag_saved.json (loaded when the panel first opens). No live AI call.
+// public/data/rag_saved.json (loaded when the panel first opens), and a box for live questions (/api/ask/).
 import { useEffect, useRef, useState } from "react";
 import { STREAMLIT_URL } from "@/lib/config";
+import LiveAsk from "@/components/LiveAsk";
 
 type Passage = { passage_id: string; source_label: string; doc_title: string; section: string; source_url: string;
   text: string; cited: boolean; field: string };
@@ -26,7 +27,7 @@ export default function AskArchive() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") { setOpen(false); trigger.current?.focus(); }
       if (e.key === "Tab" && panel.current) { // keep keyboard focus inside the panel while it is open
-        const f = panel.current.querySelectorAll<HTMLElement>("a[href], button:not([disabled])");
+        const f = panel.current.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), input");
         if (!f.length) return;
         const first = f[0], last = f[f.length - 1];
         if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
@@ -61,6 +62,7 @@ export default function AskArchive() {
           <div className="min-h-0 overflow-y-auto px-4 py-3">
             {err && <p className="text-sm text-warn">Could not load the saved answers: {err}</p>}
             {!answers && !err && <p className="text-sm text-muted" role="status">Loading…</p>}
+            {!a && <div className="mb-5"><LiveAsk compact /></div>}
             {answers && !a && (
               <>
                 <p className="font-mono text-[11px] uppercase tracking-wider text-muted">Saved, checked answers</p>
@@ -98,7 +100,7 @@ export default function AskArchive() {
             )}
           </div>
           <p className="border-t border-line px-4 py-3 text-sm">
-            Live questions: <a href={STREAMLIT_URL}>{STREAMLIT_URL.replace(/^https:\/\//, "").replace(/\/$/, "")}</a>
+            Also live in the Streamlit app: <a href={STREAMLIT_URL}>{STREAMLIT_URL.replace(/^https:\/\//, "").replace(/\/$/, "")}</a>
           </p>
         </div>
       )}

@@ -3,7 +3,7 @@ import Link from "next/link";
 import meta from "@/public/data/meta.json";
 import { Caveat, Finding, Metric, Panel } from "@/components/ui";
 import { pick, useAudience } from "@/lib/audience";
-import { GravityStrip } from "@/components/HomeSections";
+import { AudienceCards, GravityStrip } from "@/components/HomeSections";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -65,6 +65,8 @@ export default function Home() {
         Adding CO2 at a fixed O2/N2 balance also lowers O2 (40% CO2 brings {pct(k.o2_base)} O2 down to{" "}
         {pct(k.o2_at_40)}), so the data cannot separate the suppressant&apos;s effect from the lower oxygen.
       </Caveat>
+
+      <AudienceCards />
 
       <h2 className="mt-16 mb-4 text-2xl font-semibold">Explore</h2>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

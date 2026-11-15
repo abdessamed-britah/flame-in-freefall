@@ -2,6 +2,8 @@
 
 NASA Space Apps 2026.
 
+**Live app: <https://flame-in-freefall-1.streamlit.app/>**
+
 ## The problem
 
 The challenge, as recorded in the team's project notes from the official brief:
@@ -300,6 +302,23 @@ and grey for reference data. The two accents were checked for colour-blind
 separation on the dark background, and every series also has its own marker
 shape or line dash, so colour is never the only cue. The layout was checked at
 phone width (390 px) on all five pages. No external fonts or images.
+
+## Two front ends
+
+The same dashboard has two front ends.
+
+| | Streamlit (`app/`) | Next.js (`web/`) |
+|---|---|---|
+| Runs | Python server, Streamlit Community Cloud | Static site, Vercel |
+| Numbers | Computed live by `src/` (models, ranking, retrieval) | Read from `web/public/data/*.json`, exported once by `src/export_web.py` |
+| Suppression Lab inputs | Any value in the tested range | Grid only: 2 fuels x 2 suppressants x 2 atmospheres x 5 droplet sizes x fractions 0 to 0.50 step 0.025 |
+| Catalog weights | Editable; habitat O2 and pressure editable | Editable (the weighted sum runs in the browser); habitat values fixed to the three presets |
+| AI | Live questions and "Explain this result" (Gemini, checked) | The 7 saved, checked answers; a link to the Streamlit app for new questions |
+| Audience selector | No | Six audiences from the brief (Everyone, Undergraduate students, Graduate students, Professors, Aerospace researchers, Aerospace engineers); changes wording and which panels open first, never numbers or caveats |
+
+`tests/test_export_web.py` checks that 20 random grid points equal `predict()`, that the key finding
+matches the Suppression Lab, and that the catalog criteria reproduce the Python ranking. After any
+change to data or models, rerun `python src/export_web.py` and commit `web/public/data/`.
 
 ## Run it locally
 

@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+/* Dark space theme. Same colours as the Streamlit app (.streamlit/config.toml, src/theme.py). */
+@theme {
+  --color-space: #0b1020;        /* page background, near-black navy */
+  --color-panel: #151c33;        /* panels */
+  --color-panel-2: #1a2240;
+  --color-line: #2a3352;         /* borders */
+  --color-ink: #eef1fa;          /* text */
+  --color-muted: #aab2c8;        /* secondary text */
+  --color-flame: #e36a20;        /* primary actions, key series */
+  --color-flame-ink: #ff8a3d;    /* flame-coloured numbers and text */
+  --color-cool: #4594ee;         /* secondary series */
+  --color-cool-ink: #6fb0ff;     /* links */
+  --color-grey: #9aa3b5;         /* reference data */
+  --color-warn-bg: #3a2f12;
+  --color-warn: #ffd27a;
+  --font-sans: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* in the base layer, so Tailwind utility classes (in the utilities layer) override these */
+@layer base {
+  html { background: var(--color-space); color-scheme: dark; }
+  body { background: var(--color-space); color: var(--color-ink); font-family: var(--font-sans); }
+  /* :where() keeps specificity at 0 so utility classes on buttons-as-links win */
+  :where(a) { color: var(--color-cool-ink); text-underline-offset: 2px; }
+  :where(a):hover { text-decoration: underline; }
+  :focus-visible { outline: 2px solid var(--color-flame-ink); outline-offset: 2px; border-radius: 4px; }
+  summary { cursor: pointer; }
+  input[type="range"] { accent-color: var(--color-flame); }
+  .recharts-text { fill: var(--color-muted); }
+  .recharts-cartesian-axis-tick-value { font-size: 12px; }
+  .recharts-default-legend { font-size: 13px; }
+}

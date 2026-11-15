@@ -14,7 +14,7 @@ const COLOR = { CO2: "#e36a20", He: "#4594ee", none: "#9aa3b5" } as const;
 const SHAPE = { CO2: "circle", He: "diamond", none: "square" } as const;
 const INK = "#eef1fa";
 const AXIS = "#aab2c8";
-const X_MAX = 0.55;
+const X_MAX = 0.6; // as on the Streamlit page: the tested range plus 0.10, shaded
 type Target = "d_ext_over_d0" | "burning_rate_k";
 
 const f2 = (v: number | null | undefined, d = 2) => (v === null || v === undefined ? "" : v.toFixed(d));
@@ -77,7 +77,7 @@ function Chart({ slices, points, target, threshold, current, testedMax, label }:
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data} margin={{ top: 10, right: 16, bottom: 30, left: 8 }}>
           <CartesianGrid stroke="rgba(238,241,250,0.10)" />
-          <XAxis type="number" dataKey="x" domain={[0, X_MAX]} ticks={[0, 0.1, 0.2, 0.3, 0.4, 0.5]} stroke={AXIS}
+          <XAxis type="number" dataKey="x" domain={[0, X_MAX]} ticks={[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]} stroke={AXIS}
             label={{ value: "Suppressant (mole fraction)", position: "bottom", offset: 10, fill: AXIS }} />
           <YAxis type="number" domain={[0, yMax]} ticks={target === "d_ext_over_d0" ? [0, 0.2, 0.4, 0.6, 0.8, 1] : undefined} stroke={AXIS} width={56} tickFormatter={(v: number) => v.toFixed(1)}
             label={{ value: target === "d_ext_over_d0" ? "d_ext / d0 (no unit)" : "Burning rate K (unit unconfirmed)",

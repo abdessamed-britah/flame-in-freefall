@@ -20,16 +20,31 @@ export default function Home() {
   const c = meta.counts;
   return (
     <>
-      <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Flame in Freefall</h1>
-      <p className="mt-3 max-w-3xl text-lg text-muted">
-        {pick(audience, {
-          researcher: "A Moon Base will likely run on 30% O2 or more at 527 mmHg or less. This dashboard summarises what NASA's microgravity combustion investigations measured in and near that atmosphere.",
-          engineer: "A Moon Base will run on more oxygen at lower pressure than Earth: this is what NASA's microgravity combustion tests say about putting a fire out there.",
-          plain: "A Moon Base will have more oxygen and less pressure than the air on Earth. Here is what NASA's experiments in space say about how fires burn and go out there.",
-        })}
-      </p>
+      <section aria-labelledby="hero" className="pt-6 pb-12 sm:pt-12 sm:pb-16">
+        <p className="font-mono text-xs tracking-[0.18em] text-flame-ink">
+          NASA PSI · COMBUSTION SCIENCE · {c.investigations} INVESTIGATIONS
+        </p>
+        <h1 id="hero" className="mt-5 max-w-4xl text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-7xl lg:text-8xl">
+          What puts out a fire on the Moon?
+        </h1>
+        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted sm:text-xl">
+          {pick(audience, {
+            researcher: "A Moon Base will likely run on 30% O2 or more at 527 mmHg or less, so this dashboard brings together what NASA's microgravity combustion investigations measured in and near that atmosphere.",
+            engineer: "A Moon Base will run on more oxygen at lower pressure than Earth, so here is what NASA's microgravity combustion tests say about putting a fire out there.",
+            plain: "A Moon Base will have more oxygen and less pressure than Earth's air, so here is what NASA's experiments in space say about how fires burn and go out there.",
+          })}
+        </p>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <Link href="/lab/" className="rounded-lg bg-flame px-6 py-4 text-center text-lg font-semibold text-[#0b1020] hover:bg-flame-ink hover:no-underline">
+            Open the Suppression Lab
+          </Link>
+          <Link href="/catalog/" className="rounded-lg border-2 border-ink/70 px-6 py-4 text-center text-lg font-semibold text-ink hover:border-flame-ink hover:no-underline">
+            Browse the {c.investigations} investigations
+          </Link>
+        </div>
+      </section>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Metric label="NASA investigations" value={fmt(c.investigations)} hint="PSI, Combustion Science" />
         <Metric label="Unified test rows" value={fmt(c.unified_rows)} hint="from 22 NASA tables" />
         <Metric label="Passages of NASA text" value={fmt(c.passages)} hint="searchable, cited verbatim" />
@@ -48,7 +63,7 @@ export default function Home() {
         {pct(k.o2_at_40)}), so the data cannot separate the suppressant&apos;s effect from the lower oxygen.
       </Caveat>
 
-      <h2 className="mt-10 mb-3 text-2xl font-semibold">Explore</h2>
+      <h2 className="mt-16 mb-4 text-2xl font-semibold">Explore</h2>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {CARDS.map((card) => (
           <div key={card.href} className="flex flex-col rounded-lg border border-line bg-panel p-4">

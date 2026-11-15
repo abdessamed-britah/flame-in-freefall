@@ -101,7 +101,7 @@ export default function CatalogPage() {
               {shown.map(({ r, points, score, rank: rk }) => (
                 <tr key={r.psi_id}>
                   <td className={td}>{rk}</td>
-                  <td className={`${td} whitespace-nowrap`}><a href={r.source_url}>{r.psi_id}</a></td>
+                  <td className={`${td} whitespace-nowrap font-mono text-xs`}><a href={r.source_url}>{r.psi_id}</a></td>
                   <td className={`${td} whitespace-nowrap`}>{r.acronym}</td>
                   <td className={`${td} min-w-56`}>{r.name}</td>
                   <td className={td}>

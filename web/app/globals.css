@@ -16,6 +16,7 @@
   --color-warn-bg: #3a2f12;
   --color-warn: #ffd27a;
   --font-sans: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
 }
 
 /* in the base layer, so Tailwind utility classes (in the utilities layer) override these */

@@ -44,16 +44,16 @@ export function Panel({ title, open, children }: { title: string; open?: boolean
 export function Metric({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="rounded-lg border border-line bg-panel px-4 py-3">
-      <div className="text-sm text-muted">{label}</div>
-      <div className="mt-1 text-3xl font-semibold text-flame-ink">{value}</div>
-      {hint && <div className="mt-1 text-xs text-muted">{hint}</div>}
+      <div className="font-mono text-[11px] uppercase tracking-wider text-muted">{label}</div>
+      <div className="mt-2 text-3xl font-semibold tabular-nums text-flame-ink">{value}</div>
+      {hint && <div className="mt-1 font-mono text-[11px] text-muted">{hint}</div>}
     </div>
   );
 }
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="mt-10">
+    <section className="mt-16">
       <h2 className="mb-3 text-2xl font-semibold">{title}</h2>
       {children}
     </section>
@@ -64,7 +64,7 @@ export function TableWrap({ children }: { children: ReactNode }) {
   return <div className="max-w-full overflow-x-auto rounded-lg border border-line">{children}</div>;
 }
 
-export const th = "whitespace-nowrap bg-panel px-3 py-2 text-left font-medium text-muted";
+export const th = "whitespace-nowrap bg-panel px-3 py-2 text-left font-mono text-xs font-medium text-muted";
 export const td = "border-t border-line px-3 py-2 align-top";
 
 export function Select<T extends string>({ label, value, options, onChange }: {
@@ -72,7 +72,7 @@ export function Select<T extends string>({ label, value, options, onChange }: {
 }) {
   return (
     <label className="flex min-w-0 flex-col gap-1 text-sm">
-      <span className="text-muted">{label}</span>
+      <span className="font-mono text-xs text-muted">{label}</span>
       <select value={value} onChange={(e) => onChange(e.target.value as T)}
         className="rounded-md border border-line bg-panel px-3 py-2 text-ink">
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
